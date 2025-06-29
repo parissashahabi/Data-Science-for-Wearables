@@ -7,6 +7,7 @@ import glob
 import pandas as pd
 from src.analyzer import MovellaAnalyzer
 from src.ml_analyzer import NonWindowedMLAnalyzer, WindowedMLAnalyzer
+from src.accelerometer_visualizer import create_dash_app, quick_analysis, export_summary_stats
 
 def setup_directories():
     """Create necessary output directories."""
@@ -140,6 +141,13 @@ def main():
     print("• Task 1 - Sit-to-Stand: 30s repetitions + Stroop Task")
     print("• Task 2 - Water Task: Execution time & smoothness + Verbal Fluency (Fruits)")
     print("• Task 3 - Step Count: 30s walking + Task Switching")
+
+    quick_analysis(data)
+    stats = export_summary_stats(data, "my_accelerometer_stats.csv")
+
+    # Start interactive dashboard
+    app = create_dash_app(data)
+    app.run(debug=True)
     
     # try:
     #     analyzer = MovellaAnalyzer(data)
@@ -171,13 +179,13 @@ def main():
     #     import traceback
     #     traceback.print_exc()
 
-    ml_analyzer = NonWindowedMLAnalyzer(data)
-    non_windowed_results = ml_analyzer.run_analysis()
+    # ml_analyzer = NonWindowedMLAnalyzer(data)
+    # non_windowed_results = ml_analyzer.run_analysis()
 
-    windowed_analyzer = WindowedMLAnalyzer(data)
-    windowed_results = windowed_analyzer.run_analysis()
+    # windowed_analyzer = WindowedMLAnalyzer(data)
+    # windowed_results = windowed_analyzer.run_analysis()
 
-    comparison = windowed_analyzer.compare_with_non_windowed(non_windowed_results)
+    # comparison = windowed_analyzer.compare_with_non_windowed(non_windowed_results)
 
 if __name__ == "__main__":
     main()
