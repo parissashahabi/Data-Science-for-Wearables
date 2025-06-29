@@ -8,6 +8,7 @@ import pandas as pd
 from src.analyzer import MovellaAnalyzer
 from src.ml_analyzer import NonWindowedMLAnalyzer, WindowedMLAnalyzer
 from src.accelerometer_visualizer import create_dash_app, quick_analysis, export_summary_stats
+from src.enhanced_visualizer import EnhancedVisualizer
 
 def setup_directories():
     """Create necessary output directories."""
@@ -143,7 +144,13 @@ def main():
     print("• Task 3 - Step Count: 30s walking + Task Switching")
 
     quick_analysis(data)
-    stats = export_summary_stats(data, "my_accelerometer_stats.csv")
+    # stats = export_summary_stats(data, "my_accelerometer_stats.csv")
+
+    visualizer = EnhancedVisualizer()
+    visualizer.generate_enhanced_visualizations(data)
+
+    # Or create specific plots
+    visualizer.plot_all_participants_comparison(data)
 
     # Start interactive dashboard
     app = create_dash_app(data)
