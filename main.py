@@ -12,6 +12,7 @@ from src.vis.enhanced_visualizer import create_enhanced_visualizations
 from src.vis.enhanced_visualizer_new import create_all_new_visualizations
 from src.vis.visualizer import Visualizer
 from src.kmeans_analyzer import run_kmeans_analysis
+from src.vis.slope_graph_visualizer import create_slope_graphs, create_single_slope_graph
 
 def setup_directories():
     """Create necessary output directories."""
@@ -150,6 +151,8 @@ def main():
 
     # app = create_dash_app(data)
     # app.run(debug=True)
+
+    create_slope_graphs(data)
 
     # 3. Run Statistical Analysis
     print(f"\n📊 Step 3: Running complete technical report analysis...")
