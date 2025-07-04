@@ -357,8 +357,8 @@ class MovellaAnalyzer:
 
     def plot_combined_normality_for_task(self, task_normal, task_challenge, metric_type='primary', save_path=None):
         """
-        Create combined normality assessment plot for a single task (1x4 grid)
-        Perfect for presentation slides
+        Create combined normality assessment plot for a single task (1x6 grid)
+        Includes Q-Q plots, ECDF, KDE, and histograms for normality assessment
         """
         # Get measurements
         normal_measurements, challenge_measurements, valid_participants, measurement_info = self.get_task_specific_measurements(
@@ -378,102 +378,187 @@ class MovellaAnalyzer:
         print(f"   Shapiro-Wilk Normal: W={normal_stat:.4f}, p={normal_p:.4f}")
         print(f"   Shapiro-Wilk Challenge: W={challenge_stat:.4f}, p={challenge_p:.4f}")
 
-        # Create 1x4 subplot layout
-        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20, 5))
+        # Create 2x3 subplot layout (6 plots total)
+        fig, axes = plt.subplots(2, 3, figsize=(18, 10))
 
-        # === Q-Q Plot - Normal Condition ===
-        stats.probplot(normal_measurements, dist="norm", plot=ax1)
-        ax1.set_title('Q-Q Plot - Normal Condition', fontsize=12, fontweight='bold', pad=15)
-        ax1.set_xlabel('Theoretical Quantiles')
-        ax1.set_ylabel('Sample Quantiles')
-        ax1.grid(True, alpha=0.3)
+        # === Row 1: Normal Condition ===
+        
+        # Q-Q Plot - Normal Condition
+        stats.probplot(normal_measurements, dist="norm", plot=axes[0, 0])
+        axes[0, 0].set_title('Q-Q Plot - Normal Condition', fontsize=12, fontweight='bold', pad=15)
+        axes[0, 0].set_xlabel('Theoretical Quantiles')
+        axes[0, 0].set_ylabel('Sample Quantiles')
+        axes[0, 0].grid(True, alpha=0.3)
 
         # Add Shapiro-Wilk result
         normality_status = "✓ Normal" if normal_p > 0.05 else "⚠ Non-normal"
-        ax1.text(0.05, 0.95, f'Shapiro-Wilk: p={normal_p:.3f}\n{normality_status}',
-                 transform=ax1.transAxes, fontsize=10, verticalalignment='top',
-                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+        axes[0, 0].text(0.05, 0.95, f'Shapiro-Wilk: p={normal_p:.3f}\n{normality_status}',
+                        transform=axes[0, 0].transAxes, fontsize=10, verticalalignment='top',
+                        bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
 
-        # === ECDF - Normal Condition ===
+        # ECDF - Normal Condition
         sorted_data, ecdf_values = self.calculate_ecdf(normal_measurements)
-
-        # Add padding for visualization
         data_min, data_max = np.min(sorted_data), np.max(sorted_data)
         data_range = data_max - data_min if data_max != data_min else 1
         x_start = data_min - 0.2 * data_range
         x_end = data_max + 0.2 * data_range
-
         x_plot = np.concatenate([[x_start], sorted_data])
         y_plot = np.concatenate([[0], ecdf_values])
 
-        ax2.step(x_plot, y_plot, where='post', linewidth=3, color='blue')
-        ax2.set_title('ECDF - Normal Condition', fontsize=12, fontweight='bold', pad=15)
-        ax2.set_xlabel(f'Data Values ({measurement_info["unit"]})')
-        ax2.set_ylabel('Cumulative Probability')
-        ax2.grid(True, alpha=0.3)
-        ax2.set_xlim(x_start, x_end)
-        ax2.set_ylim(0, 1)
+        axes[0, 1].step(x_plot, y_plot, where='post', linewidth=3, color='blue')
+        axes[0, 1].set_title('ECDF - Normal Condition', fontsize=12, fontweight='bold', pad=15)
+        axes[0, 1].set_xlabel(f'Data Values ({measurement_info["unit"]})')
+        axes[0, 1].set_ylabel('Cumulative Probability')
+        axes[0, 1].grid(True, alpha=0.3)
+        axes[0, 1].set_xlim(x_start, x_end)
+        axes[0, 1].set_ylim(0, 1)
 
-        # === Q-Q Plot - Challenge Condition ===
-        stats.probplot(challenge_measurements, dist="norm", plot=ax3)
-        ax3.set_title('Q-Q Plot - Challenge Condition', fontsize=12, fontweight='bold', pad=15)
-        ax3.set_xlabel('Theoretical Quantiles')
-        ax3.set_ylabel('Sample Quantiles')
-        ax3.grid(True, alpha=0.3)
+        # Histogram + KDE - Normal Condition
+        axes[0, 2].hist(normal_measurements, bins=min(8, len(normal_measurements)//2), 
+                        density=True, alpha=0.7, color='lightblue', edgecolor='black', linewidth=1)
+        
+        # Add KDE if we have enough data points
+        if len(normal_measurements) >= 3:
+            from scipy.stats import gaussian_kde
+            try:
+                kde = gaussian_kde(normal_measurements)
+                x_kde = np.linspace(normal_measurements.min(), normal_measurements.max(), 100)
+                axes[0, 2].plot(x_kde, kde(x_kde), 'b-', linewidth=2, label='KDE')
+                
+                # Add normal distribution overlay for comparison
+                mean_norm = np.mean(normal_measurements)
+                std_norm = np.std(normal_measurements)
+                x_normal = np.linspace(normal_measurements.min(), normal_measurements.max(), 100)
+                y_normal = stats.norm.pdf(x_normal, mean_norm, std_norm)
+                axes[0, 2].plot(x_normal, y_normal, 'r--', linewidth=2, label='Normal fit', alpha=0.8)
+                
+                axes[0, 2].legend(fontsize=9)
+            except:
+                pass
+        
+        axes[0, 2].set_title('Histogram + KDE - Normal Condition', fontsize=12, fontweight='bold', pad=15)
+        axes[0, 2].set_xlabel(f'Data Values ({measurement_info["unit"]})')
+        axes[0, 2].set_ylabel('Density')
+        axes[0, 2].grid(True, alpha=0.3)
+
+        # === Row 2: Challenge Condition ===
+        
+        # Q-Q Plot - Challenge Condition
+        stats.probplot(challenge_measurements, dist="norm", plot=axes[1, 0])
+        axes[1, 0].set_title('Q-Q Plot - Challenge Condition', fontsize=12, fontweight='bold', pad=15)
+        axes[1, 0].set_xlabel('Theoretical Quantiles')
+        axes[1, 0].set_ylabel('Sample Quantiles')
+        axes[1, 0].grid(True, alpha=0.3)
 
         # Add Shapiro-Wilk result
         normality_status = "✓ Normal" if challenge_p > 0.05 else "⚠ Non-normal"
-        ax3.text(0.05, 0.95, f'Shapiro-Wilk: p={challenge_p:.3f}\n{normality_status}',
-                 transform=ax3.transAxes, fontsize=10, verticalalignment='top',
-                 bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.8))
+        axes[1, 0].text(0.05, 0.95, f'Shapiro-Wilk: p={challenge_p:.3f}\n{normality_status}',
+                        transform=axes[1, 0].transAxes, fontsize=10, verticalalignment='top',
+                        bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.8))
 
-        # === ECDF - Challenge Condition ===
+        # ECDF - Challenge Condition
         sorted_data, ecdf_values = self.calculate_ecdf(challenge_measurements)
-
-        # Add padding for visualization
         data_min, data_max = np.min(sorted_data), np.max(sorted_data)
         data_range = data_max - data_min if data_max != data_min else 1
         x_start = data_min - 0.2 * data_range
         x_end = data_max + 0.2 * data_range
-
         x_plot = np.concatenate([[x_start], sorted_data])
         y_plot = np.concatenate([[0], ecdf_values])
 
-        ax4.step(x_plot, y_plot, where='post', linewidth=3, color='red')
-        ax4.set_title('ECDF - Challenge Condition', fontsize=12, fontweight='bold', pad=15)
-        ax4.set_xlabel(f'Data Values ({measurement_info["unit"]})')
-        ax4.set_ylabel('Cumulative Probability')
-        ax4.grid(True, alpha=0.3)
-        ax4.set_xlim(x_start, x_end)
-        ax4.set_ylim(0, 1)
+        axes[1, 1].step(x_plot, y_plot, where='post', linewidth=3, color='red')
+        axes[1, 1].set_title('ECDF - Challenge Condition', fontsize=12, fontweight='bold', pad=15)
+        axes[1, 1].set_xlabel(f'Data Values ({measurement_info["unit"]})')
+        axes[1, 1].set_ylabel('Cumulative Probability')
+        axes[1, 1].grid(True, alpha=0.3)
+        axes[1, 1].set_xlim(x_start, x_end)
+        axes[1, 1].set_ylim(0, 1)
+
+        # Histogram + KDE - Challenge Condition
+        axes[1, 2].hist(challenge_measurements, bins=min(8, len(challenge_measurements)//2), 
+                        density=True, alpha=0.7, color='lightcoral', edgecolor='black', linewidth=1)
+        
+        # Add KDE if we have enough data points
+        if len(challenge_measurements) >= 3:
+            from scipy.stats import gaussian_kde
+            try:
+                kde = gaussian_kde(challenge_measurements)
+                x_kde = np.linspace(challenge_measurements.min(), challenge_measurements.max(), 100)
+                axes[1, 2].plot(x_kde, kde(x_kde), 'r-', linewidth=2, label='KDE')
+                
+                # Add normal distribution overlay for comparison
+                mean_chal = np.mean(challenge_measurements)
+                std_chal = np.std(challenge_measurements)
+                x_normal = np.linspace(challenge_measurements.min(), challenge_measurements.max(), 100)
+                y_normal = stats.norm.pdf(x_normal, mean_chal, std_chal)
+                axes[1, 2].plot(x_normal, y_normal, 'b--', linewidth=2, label='Normal fit', alpha=0.8)
+                
+                axes[1, 2].legend(fontsize=9)
+            except:
+                pass
+        
+        axes[1, 2].set_title('Histogram + KDE - Challenge Condition', fontsize=12, fontweight='bold', pad=15)
+        axes[1, 2].set_xlabel(f'Data Values ({measurement_info["unit"]})')
+        axes[1, 2].set_ylabel('Density')
+        axes[1, 2].grid(True, alpha=0.3)
+
+        # Add overall title with task information
+        plt.suptitle(f'Normality Assessment: {measurement_info["name"]}\n' + 
+                    f'Cognitive Task: {measurement_info["cognitive_task"]}', 
+                    fontsize=16, fontweight='bold', y=0.95)
 
         # Adjust layout
         plt.tight_layout()
-        plt.subplots_adjust(bottom=0.15, left=0.05, right=0.95, wspace=0.3)
+        plt.subplots_adjust(top=0.88, bottom=0.08, left=0.06, right=0.96, wspace=0.25, hspace=0.35)
 
         # Save if path provided
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"💾 Combined plot saved to: {save_path}")
+            print(f"💾 Enhanced normality plot saved to: {save_path}")
 
         plt.show()
 
         # Print recommendation
-        if normal_p > 0.05 and challenge_p > 0.05:
-            recommendation = "✅ Both conditions normal - Proceed with paired t-test"
-        elif normal_p > 0.01 and challenge_p > 0.01:
-            recommendation = "⚠️ Mild deviation - Proceed with caution, consider non-parametric"
-        else:
-            recommendation = "❌ Significant deviation - Use Wilcoxon signed-rank test"
+        print(f"\n📋 NORMALITY ASSESSMENT:")
+        print(f"   Normal condition:")
+        print(f"     • Shapiro-Wilk p-value: {normal_p:.4f}")
+        print(f"     • Sample size: {len(normal_measurements)}")
+        print(f"     • Mean ± SD: {np.mean(normal_measurements):.3f} ± {np.std(normal_measurements):.3f}")
+        
+        print(f"   Challenge condition:")
+        print(f"     • Shapiro-Wilk p-value: {challenge_p:.4f}")
+        print(f"     • Sample size: {len(challenge_measurements)}")
+        print(f"     • Mean ± SD: {np.mean(challenge_measurements):.3f} ± {np.std(challenge_measurements):.3f}")
 
-        print(f"   📋 Recommendation: {recommendation}")
+        if normal_p > 0.05 and challenge_p > 0.05:
+            recommendation = "✅ Both conditions appear normal - Proceed with paired t-test"
+            test_choice = "Parametric (paired t-test)"
+        elif normal_p > 0.01 and challenge_p > 0.01:
+            recommendation = "⚠️ Mild deviation from normality - Proceed with caution, consider non-parametric"
+            test_choice = "Parametric with caution or non-parametric"
+        else:
+            recommendation = "❌ Significant deviation from normality - Use Wilcoxon signed-rank test"
+            test_choice = "Non-parametric (Wilcoxon signed-rank)"
+
+        print(f"   📊 Statistical test recommendation: {test_choice}")
+        print(f"   💡 Interpretation: {recommendation}")
 
         return {
             'normal_p': normal_p,
             'challenge_p': challenge_p,
             'recommendation': recommendation,
+            'test_choice': test_choice,
             'normal_data': normal_measurements,
-            'challenge_data': challenge_measurements
+            'challenge_data': challenge_measurements,
+            'normal_stats': {
+                'mean': np.mean(normal_measurements),
+                'std': np.std(normal_measurements),
+                'n': len(normal_measurements)
+            },
+            'challenge_stats': {
+                'mean': np.mean(challenge_measurements),
+                'std': np.std(challenge_measurements),
+                'n': len(challenge_measurements)
+            }
         }
 
     def paired_t_test_with_hypothesis(self, normal_data, challenge_data, task_name, participants, measurement_info):

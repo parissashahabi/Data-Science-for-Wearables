@@ -11,6 +11,7 @@ from src.vis.accelerometer_visualizer import create_dash_app
 from src.vis.enhanced_visualizer import create_enhanced_visualizations
 from src.vis.enhanced_visualizer_new import create_all_new_visualizations
 from src.vis.visualizer import Visualizer
+from src.kmeans_analyzer import run_kmeans_analysis
 
 def setup_directories():
     """Create necessary output directories."""
@@ -196,6 +197,10 @@ def main():
     windowed_results = windowed_analyzer.run_analysis()
 
     comparison = windowed_analyzer.compare_with_non_windowed(non_windowed_results)
+
+    # 5. Clustering Analysis
+    print("\n🔍 Step 5: Running clustering analysis...")
+    kmeans_results = run_kmeans_analysis(data)
 
 if __name__ == "__main__":
     main()
