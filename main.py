@@ -7,8 +7,10 @@ import glob
 import pandas as pd
 from src.analyzer import MovellaAnalyzer
 from src.ml_analyzer import NonWindowedMLAnalyzer, WindowedMLAnalyzer
-from src.accelerometer_visualizer import create_dash_app, quick_analysis, export_summary_stats
-from src.enhanced_visualizer import EnhancedVisualizer
+from src.vis.accelerometer_visualizer import create_dash_app
+from src.vis.enhanced_visualizer import create_enhanced_visualizations
+from src.vis.enhanced_visualizer_new import create_all_new_visualizations
+from src.vis.visualizer import Visualizer
 
 def setup_directories():
     """Create necessary output directories."""
@@ -113,8 +115,8 @@ def main():
     # Setup
     setup_directories()
     
-    # Data directory - adjust this path as needed
-    base_dir = "data"  # Change this to your actual data directory path
+    # Data directory
+    base_dir = "data"
     
     if not os.path.exists(base_dir):
         print(f"❌ Error: Data directory '{base_dir}' not found!")
@@ -135,64 +137,65 @@ def main():
     if not any(data.values()):
         print("❌ No data was loaded. Please check your data directory structure.")
         return
+    
+    # 2. Visualize Data
+    print("\n📊 Step 2: Generating visualizations...")
+    visualizer = Visualizer()
+    visualizer.generate_all_visualizations(data)
 
-    # 2. Run Complete Statistical Analysis
-    print(f"\n📊 Step 2: Running complete technical report analysis...")
+    create_all_new_visualizations(data)
+
+    create_enhanced_visualizations(data)
+
+    # app = create_dash_app(data)
+    # app.run(debug=True)
+
+    # 3. Run Statistical Analysis
+    print(f"\n📊 Step 3: Running complete technical report analysis...")
     print("\nTASK SPECIFICATIONS:")
     print("• Task 1 - Sit-to-Stand: 30s repetitions + Stroop Task")
     print("• Task 2 - Water Task: Execution time & smoothness + Verbal Fluency (Fruits)")
     print("• Task 3 - Step Count: 30s walking + Task Switching")
-
-    quick_analysis(data)
-    # stats = export_summary_stats(data, "my_accelerometer_stats.csv")
-
-    visualizer = EnhancedVisualizer()
-    visualizer.generate_enhanced_visualizations(data)
-
-    # Or create specific plots
-    visualizer.plot_all_participants_comparison(data)
-
-    # Start interactive dashboard
-    app = create_dash_app(data)
-    app.run(debug=True)
     
-    # try:
-    #     analyzer = MovellaAnalyzer(data)
-    #     results = analyzer.run_technical_report_analysis()
+    try:
+        analyzer = MovellaAnalyzer(data)
+        results = analyzer.run_technical_report_analysis()
         
-    #     print(f"\n🎉 Analysis complete!")
-    #     print(f"\n📁 Generated files in 'outputs/' directory:")
-    #     print("   • normality_plots/: Q-Q plots and ECDF visualizations")
-    #     print("   • Console output: Detailed statistical results")
+        print(f"\n🎉 Analysis complete!")
+        print(f"\n📁 Generated files in 'outputs/' directory:")
+        print("   • normality_plots/: Q-Q plots and ECDF visualizations")
+        print("   • Console output: Detailed statistical results")
         
-    #     # Print final summary
-    #     print(f"\n📋 ANALYSIS SUMMARY:")
-    #     task_count = 0
-    #     for task_name, result in results.items():
-    #         if result is not None:
-    #             task_count += 1
-    #             print(f"   ✅ {task_name.replace('_', ' ').title()}: Analysis completed")
-    #         else:
-    #             print(f"   ❌ {task_name.replace('_', ' ').title()}: Insufficient data")
+        # Print final summary
+        print(f"\n📋 ANALYSIS SUMMARY:")
+        task_count = 0
+        for task_name, result in results.items():
+            if result is not None:
+                task_count += 1
+                print(f"   ✅ {task_name.replace('_', ' ').title()}: Analysis completed")
+            else:
+                print(f"   ❌ {task_name.replace('_', ' ').title()}: Insufficient data")
         
-    #     print(f"\n🏆 Successfully analyzed {task_count} task(s)")
-    #     print("\n💡 CLINICAL IMPLICATIONS:")
-    #     print("   • Significant results indicate cognitive-motor interference")
-    #     print("   • Effect sizes help determine clinical relevance")
-    #     print("   • Dual-task deficits may predict fall risk and functional decline")
+        print(f"\n🏆 Successfully analyzed {task_count} task(s)")
+        print("\n💡 CLINICAL IMPLICATIONS:")
+        print("   • Significant results indicate cognitive-motor interference")
+        print("   • Effect sizes help determine clinical relevance")
+        print("   • Dual-task deficits may predict fall risk and functional decline")
         
-    # except Exception as e:
-    #     print(f"❌ Error during analysis: {e}")
-    #     import traceback
-    #     traceback.print_exc()
+    except Exception as e:
+        print(f"❌ Error during analysis: {e}")
+        import traceback
+        traceback.print_exc()
 
-    # ml_analyzer = NonWindowedMLAnalyzer(data)
-    # non_windowed_results = ml_analyzer.run_analysis()
+    # 4. Run Machine Learning Analysis
+    print("\n🤖 Step 4: Running machine learning analysis...")
+    ml_analyzer = NonWindowedMLAnalyzer(data)
+    non_windowed_results = ml_analyzer.run_analysis()
 
-    # windowed_analyzer = WindowedMLAnalyzer(data)
-    # windowed_results = windowed_analyzer.run_analysis()
+    windowed_analyzer = WindowedMLAnalyzer(data)
+    windowed_results = windowed_analyzer.run_analysis()
 
-    # comparison = windowed_analyzer.compare_with_non_windowed(non_windowed_results)
+    comparison = windowed_analyzer.compare_with_non_windowed(non_windowed_results)
 
 if __name__ == "__main__":
     main()
