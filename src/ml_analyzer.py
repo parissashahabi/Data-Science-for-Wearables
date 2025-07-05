@@ -1,8 +1,11 @@
 """
 Non-windowed and Windowed Machine Learning Analysis for Sensor Data Classification
+
 Classifies normal vs challenge conditions using entire recordings.
+
 Analyzes overlapping time windows to increase sample size and detect temporal patterns.
 """
+
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -224,6 +227,7 @@ class NonWindowedMLAnalyzer:
             print(f"   🔍 Testing k_features values: {k_features_list}")
 
             best_k_results = {}
+            all_model_best_k = {}  # Track best k for each model
 
             for k_features in k_features_list:
                 print(f"\n   🔬 Testing with k={k_features} features...")
@@ -239,6 +243,9 @@ class NonWindowedMLAnalyzer:
                     'K-NN': KNeighborsClassifier(n_neighbors=3),
                     'Naive Bayes': GaussianNB()
                 }
+
+                print(f"      {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
+                print(f"      {'-' * 70}")
 
                 k_results = {}
 
@@ -286,6 +293,14 @@ class NonWindowedMLAnalyzer:
                     if all_metrics:
                         mean_metrics = {metric: np.mean(values) for metric, values in all_metrics.items()}
 
+                        print(f"      {model_name:<15} "
+                              f"{mean_metrics['accuracy']:.3f} "
+                              f"{mean_metrics['f1_score']:.3f} "
+                              f"{mean_metrics['precision']:.3f} "
+                              f"{mean_metrics['recall']:.3f} "
+                              f"{mean_metrics['specificity']:.3f} "
+                              f"{mean_metrics.get('roc_auc', 0):.3f}")
+
                         k_results[model_name] = {
                             'mean_metrics': mean_metrics,
                             'all_y_true': all_y_true,
@@ -295,6 +310,12 @@ class NonWindowedMLAnalyzer:
                             'selected_features': selected_features,
                             'k_features': k_features
                         }
+
+                        # Track best k for each model
+                        if model_name not in all_model_best_k:
+                            all_model_best_k[model_name] = {'best_k': k_features, 'best_f1': mean_metrics['f1_score'], 'best_result': k_results[model_name]}
+                        elif mean_metrics['f1_score'] > all_model_best_k[model_name]['best_f1']:
+                            all_model_best_k[model_name] = {'best_k': k_features, 'best_f1': mean_metrics['f1_score'], 'best_result': k_results[model_name]}
 
                 if k_results:
                     best_model_for_k = max(k_results.keys(), key=lambda x: k_results[x]['mean_metrics']['f1_score'])
@@ -307,28 +328,22 @@ class NonWindowedMLAnalyzer:
                     print(f"      Best model for k={k_features}: {best_model_for_k} "
                           f"(F1: {k_results[best_model_for_k]['mean_metrics']['f1_score']:.3f})")
 
+            # Display best performance for each model across all k values
+            print(f"\n   🏆 Best Performance for Each Model:")
+            print(f"   {'Model':<15} {'Best k':<8} {'F1-Score':<10} {'Accuracy':<10}")
+            print(f"   {'-' * 50}")
+            for model_name, model_info in all_model_best_k.items():
+                best_metrics = model_info['best_result']['mean_metrics']
+                print(f"   {model_name:<15} {model_info['best_k']:<8} {best_metrics['f1_score']:.3f} "
+                      f"{best_metrics['accuracy']:.3f}")
+
             # Find overall best k_features
             if best_k_results:
                 best_k = max(best_k_results.keys(), key=lambda x: best_k_results[x]['best_f1'])
                 best_overall = best_k_results[best_k]
 
-                print(f"\n   🏆 Best k_features: {best_k} with {best_overall['best_model']} "
+                print(f"\n   🥇 Overall Best: k={best_k} with {best_overall['best_model']} "
                       f"(F1-Score: {best_overall['best_f1']:.3f})")
-
-                # Display results table for best k
-                print(f"\n   🔄 Results for k={best_k} features:")
-                print(f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
-                print(f"   {'-' * 70}")
-
-                for model_name, model_result in best_overall['results'].items():
-                    metrics = model_result['mean_metrics']
-                    print(f"   {model_name:<15} "
-                          f"{metrics['accuracy']:.3f} "
-                          f"{metrics['f1_score']:.3f} "
-                          f"{metrics['precision']:.3f} "
-                          f"{metrics['recall']:.3f} "
-                          f"{metrics['specificity']:.3f} "
-                          f"{metrics.get('roc_auc', 0):.3f}")
 
                 # Store final results
                 best_result = best_overall['results'][best_overall['best_model']]
@@ -364,7 +379,8 @@ class NonWindowedMLAnalyzer:
                     'confusion_matrix': best_result['confusion_matrix'],
                     'n_samples': best_result['n_samples'],
                     'k_features_tested': k_features_list,
-                    'all_k_results': best_k_results
+                    'all_k_results': best_k_results,
+                    'all_model_best_k': all_model_best_k
                 }
 
         print(f"\n" + "=" * 80)
@@ -422,6 +438,7 @@ class NonWindowedMLAnalyzer:
             plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
+            plt.show()
             plt.savefig('./outputs/ml_plots/non_windowed_f1_comparison.png', dpi=300, bbox_inches='tight')
             plt.close()
             print("📊 Saved: non_windowed_f1_comparison.png")
@@ -444,26 +461,34 @@ class NonWindowedMLAnalyzer:
                          f'{count}', ha='center', va='bottom')
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
+            plt.show()
             plt.savefig('./outputs/ml_plots/non_windowed_sample_sizes.png', dpi=300, bbox_inches='tight')
             plt.close()
             print("📊 Saved: non_windowed_sample_sizes.png")
 
-        # Plot 3: Confusion matrices for each task
+        # Plot 3: Confusion matrices for each task (with model and k info)
         for task, task_result in self.results.items():
             plt.figure(figsize=(6, 5))
             cm = task_result['confusion_matrix']
+            best_model = task_result['best_model']
+            best_k = task_result['best_k_features']
+
             sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                         xticklabels=['Normal', 'Challenge'],
                         yticklabels=['Normal', 'Challenge'],
                         cbar_kws={'label': 'Count'})
-            plt.title(f'Confusion Matrix - {task.replace("_", " ").title()}\n(Non-Windowed)',
+            plt.title(f'Confusion Matrix - {task.replace("_", " ").title()}\n'
+                      f'Model: {best_model}, k={best_k} (Non-Windowed)',
                       fontsize=12, fontweight='bold')
             plt.ylabel('True Label')
             plt.xlabel('Predicted Label')
             plt.tight_layout()
-            plt.savefig(f'./outputs/ml_plots/non_windowed_confusion_matrix_{task}.png', dpi=300, bbox_inches='tight')
+
+            filename = f'./outputs/ml_plots/non_windowed_confusion_matrix_{task}_{best_model.replace(" ", "_")}_k{best_k}.png'
+            plt.show()
+            plt.savefig(filename, dpi=300, bbox_inches='tight')
             plt.close()
-            print(f"📊 Saved: non_windowed_confusion_matrix_{task}.png")
+            print(f"📊 Saved: {filename}")
 
         # Plot 4: Performance radar chart
         plt.figure(figsize=(8, 8))
@@ -499,6 +524,7 @@ class NonWindowedMLAnalyzer:
         plt.title('Performance Radar Chart (Non-Windowed)', fontsize=14, fontweight='bold', pad=20)
         plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1))
         plt.tight_layout()
+        plt.show()
         plt.savefig('./outputs/ml_plots/non_windowed_radar_chart.png', dpi=300, bbox_inches='tight')
         plt.close()
         print("📊 Saved: non_windowed_radar_chart.png")
@@ -528,37 +554,48 @@ class NonWindowedMLAnalyzer:
 
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
+            plt.show()
             plt.savefig('./outputs/ml_plots/non_windowed_model_comparison.png', dpi=300, bbox_inches='tight')
             plt.close()
             print("📊 Saved: non_windowed_model_comparison.png")
 
-        # Plot 6: Feature importance
+        # Plot 6: Best k for each model across all tasks
         plt.figure(figsize=(12, 8))
-        feature_importance_data = []
 
+        all_model_k_data = []
         for task, task_result in self.results.items():
-            selected_features = task_result['selected_features'][:5]
-            importance_scores = np.random.random(len(selected_features))  # Simulated
-
-            for feat, score in zip(selected_features, importance_scores):
-                feature_importance_data.append({
+            for model_name, model_info in task_result['all_model_best_k'].items():
+                all_model_k_data.append({
                     'Task': task.replace('_', ' ').title(),
-                    'Feature': feat.split('_')[0],
-                    'Importance': score
+                    'Model': model_name,
+                    'Best_k': model_info['best_k'],
+                    'F1_Score': model_info['best_f1']
                 })
 
-        if feature_importance_data:
-            df_importance = pd.DataFrame(feature_importance_data)
-            top_features = df_importance.groupby('Feature')['Importance'].mean().nlargest(6).index
-            df_importance_filtered = df_importance[df_importance['Feature'].isin(top_features)]
+        if all_model_k_data:
+            df_model_k = pd.DataFrame(all_model_k_data)
 
-            sns.barplot(data=df_importance_filtered, x='Importance', y='Feature', hue='Task')
-            plt.title('Feature Importance (Non-Windowed)', fontsize=14, fontweight='bold')
-            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            # Create subplot for k values
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+
+            # Plot 1: Best k for each model
+            sns.barplot(data=df_model_k, x='Task', y='Best_k', hue='Model', ax=ax1)
+            ax1.set_title('Best k Features for Each Model by Task (Non-Windowed)', fontweight='bold')
+            ax1.set_ylabel('Best k Features')
+            ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+            # Plot 2: F1 scores at best k
+            sns.barplot(data=df_model_k, x='Task', y='F1_Score', hue='Model', ax=ax2)
+            ax2.set_title('F1-Score at Best k for Each Model (Non-Windowed)', fontweight='bold')
+            ax2.set_ylabel('F1-Score')
+            ax2.set_ylim(0, 1)
+            ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
             plt.tight_layout()
-            plt.savefig('./outputs/ml_plots/non_windowed_feature_importance.png', dpi=300, bbox_inches='tight')
+            plt.savefig('./outputs/ml_plots/non_windowed_best_k_analysis.png', dpi=300, bbox_inches='tight')
+            plt.show()
             plt.close()
-            print("📊 Saved: non_windowed_feature_importance.png")
+            print("📊 Saved: non_windowed_best_k_analysis.png")
 
 class WindowedMLAnalyzer:
     def __init__(self, data_dict):
@@ -817,6 +854,7 @@ class WindowedMLAnalyzer:
             print(f"   🔍 Testing k_features values: {k_features_list}")
 
             best_k_results = {}
+            all_model_best_k = {}  # Track best k for each model
 
             for k_features in k_features_list:
                 print(f"\n   🔬 Testing with k={k_features} features...")
@@ -832,6 +870,9 @@ class WindowedMLAnalyzer:
                     'K-NN': KNeighborsClassifier(n_neighbors=5),
                     'Naive Bayes': GaussianNB()
                 }
+
+                print(f"      {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
+                print(f"      {'-' * 70}")
 
                 k_results = {}
 
@@ -879,6 +920,14 @@ class WindowedMLAnalyzer:
                     if all_metrics:
                         mean_metrics = {metric: np.mean(values) for metric, values in all_metrics.items()}
 
+                        print(f"      {model_name:<15} "
+                              f"{mean_metrics['accuracy']:.3f} "
+                              f"{mean_metrics['f1_score']:.3f} "
+                              f"{mean_metrics['precision']:.3f} "
+                              f"{mean_metrics['recall']:.3f} "
+                              f"{mean_metrics['specificity']:.3f} "
+                              f"{mean_metrics.get('roc_auc', 0):.3f}")
+
                         k_results[model_name] = {
                             'mean_metrics': mean_metrics,
                             'all_y_true': all_y_true,
@@ -888,6 +937,12 @@ class WindowedMLAnalyzer:
                             'selected_features': selected_features,
                             'k_features': k_features
                         }
+
+                        # Track best k for each model
+                        if model_name not in all_model_best_k:
+                            all_model_best_k[model_name] = {'best_k': k_features, 'best_f1': mean_metrics['f1_score'], 'best_result': k_results[model_name]}
+                        elif mean_metrics['f1_score'] > all_model_best_k[model_name]['best_f1']:
+                            all_model_best_k[model_name] = {'best_k': k_features, 'best_f1': mean_metrics['f1_score'], 'best_result': k_results[model_name]}
 
                 if k_results:
                     best_model_for_k = max(k_results.keys(), key=lambda x: k_results[x]['mean_metrics']['f1_score'])
@@ -900,28 +955,22 @@ class WindowedMLAnalyzer:
                     print(f"      Best model for k={k_features}: {best_model_for_k} "
                           f"(F1: {k_results[best_model_for_k]['mean_metrics']['f1_score']:.3f})")
 
+            # Display best performance for each model across all k values
+            print(f"\n   🏆 Best Performance for Each Model:")
+            print(f"   {'Model':<15} {'Best k':<8} {'F1-Score':<10} {'Accuracy':<10}")
+            print(f"   {'-' * 50}")
+            for model_name, model_info in all_model_best_k.items():
+                best_metrics = model_info['best_result']['mean_metrics']
+                print(f"   {model_name:<15} {model_info['best_k']:<8} {best_metrics['f1_score']:.3f} "
+                      f"{best_metrics['accuracy']:.3f}")
+
             # Find overall best k_features
             if best_k_results:
                 best_k = max(best_k_results.keys(), key=lambda x: best_k_results[x]['best_f1'])
                 best_overall = best_k_results[best_k]
 
-                print(f"\n   🏆 Best k_features: {best_k} with {best_overall['best_model']} "
+                print(f"\n   🥇 Overall Best: k={best_k} with {best_overall['best_model']} "
                       f"(F1-Score: {best_overall['best_f1']:.3f})")
-
-                # Display results table for best k
-                print(f"\n   🔄 Results for k={best_k} features:")
-                print(f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
-                print(f"   {'-' * 70}")
-
-                for model_name, model_result in best_overall['results'].items():
-                    metrics = model_result['mean_metrics']
-                    print(f"   {model_name:<15} "
-                          f"{metrics['accuracy']:.3f} "
-                          f"{metrics['f1_score']:.3f} "
-                          f"{metrics['precision']:.3f} "
-                          f"{metrics['recall']:.3f} "
-                          f"{metrics['specificity']:.3f} "
-                          f"{metrics.get('roc_auc', 0):.3f}")
 
                 # Store final results
                 best_result = best_overall['results'][best_overall['best_model']]
@@ -957,7 +1006,8 @@ class WindowedMLAnalyzer:
                     'confusion_matrix': best_result['confusion_matrix'],
                     'n_windows': best_result['n_windows'],
                     'k_features_tested': k_features_list,
-                    'all_k_results': best_k_results
+                    'all_k_results': best_k_results,
+                    'all_model_best_k': all_model_best_k
                 }
 
         print(f"\n" + "=" * 80)
@@ -1015,6 +1065,7 @@ class WindowedMLAnalyzer:
             plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
+            plt.show()
             plt.savefig('./outputs/ml_plots/windowed_f1_comparison.png', dpi=300, bbox_inches='tight')
             plt.close()
             print("📊 Saved: windowed_f1_comparison.png")
@@ -1051,26 +1102,34 @@ class WindowedMLAnalyzer:
 
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
+            plt.show()
             plt.savefig('./outputs/ml_plots/windowed_sample_size_comparison.png', dpi=300, bbox_inches='tight')
             plt.close()
             print("📊 Saved: windowed_sample_size_comparison.png")
 
-        # Plot 3: Confusion matrices for each task
+        # Plot 3: Confusion matrices for each task (with model and k info)
         for task, task_result in self.results.items():
             plt.figure(figsize=(6, 5))
             cm = task_result['confusion_matrix']
+            best_model = task_result['best_model']
+            best_k = task_result['best_k_features']
+
             sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                         xticklabels=['Normal', 'Challenge'],
                         yticklabels=['Normal', 'Challenge'],
                         cbar_kws={'label': 'Count'})
-            plt.title(f'Confusion Matrix - {task.replace("_", " ").title()}\n(Windowed)',
+            plt.title(f'Confusion Matrix - {task.replace("_", " ").title()}\n'
+                      f'Model: {best_model}, k={best_k} (Windowed)',
                       fontsize=12, fontweight='bold')
             plt.ylabel('True Label')
             plt.xlabel('Predicted Label')
             plt.tight_layout()
-            plt.savefig(f'./outputs/ml_plots/windowed_confusion_matrix_{task}.png', dpi=300, bbox_inches='tight')
+
+            filename = f'./outputs/ml_plots/windowed_confusion_matrix_{task}_{best_model.replace(" ", "_")}_k{best_k}.png'
+            plt.show()
+            plt.savefig(filename, dpi=300, bbox_inches='tight')
             plt.close()
-            print(f"📊 Saved: windowed_confusion_matrix_{task}.png")
+            print(f"📊 Saved: {filename}")
 
         # Plot 4: Performance radar chart
         plt.figure(figsize=(8, 8))
@@ -1106,6 +1165,7 @@ class WindowedMLAnalyzer:
         plt.title('Performance Radar Chart (Windowed)', fontsize=14, fontweight='bold', pad=20)
         plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1))
         plt.tight_layout()
+        plt.show()
         plt.savefig('./outputs/ml_plots/windowed_radar_chart.png', dpi=300, bbox_inches='tight')
         plt.close()
         print("📊 Saved: windowed_radar_chart.png")
@@ -1122,6 +1182,7 @@ class WindowedMLAnalyzer:
             plt.legend(title='Task', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
+            plt.show()
             plt.savefig('./outputs/ml_plots/windowed_participant_distribution.png', dpi=300, bbox_inches='tight')
             plt.close()
             print("📊 Saved: windowed_participant_distribution.png")
@@ -1151,6 +1212,7 @@ class WindowedMLAnalyzer:
 
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
+            plt.show()
             plt.savefig('./outputs/ml_plots/windowed_model_comparison.png', dpi=300, bbox_inches='tight')
             plt.close()
             print("📊 Saved: windowed_model_comparison.png")
@@ -1175,9 +1237,47 @@ class WindowedMLAnalyzer:
         plt.grid(True, alpha=0.3)
         plt.xscale('log')
         plt.tight_layout()
+        plt.show()
         plt.savefig('./outputs/ml_plots/windowed_learning_curves.png', dpi=300, bbox_inches='tight')
         plt.close()
         print("📊 Saved: windowed_learning_curves.png")
+
+        # Plot 8: Best k for each model across all tasks
+        plt.figure(figsize=(12, 8))
+
+        all_model_k_data = []
+        for task, task_result in self.results.items():
+            for model_name, model_info in task_result['all_model_best_k'].items():
+                all_model_k_data.append({
+                    'Task': task.replace('_', ' ').title(),
+                    'Model': model_name,
+                    'Best_k': model_info['best_k'],
+                    'F1_Score': model_info['best_f1']
+                })
+
+        if all_model_k_data:
+            df_model_k = pd.DataFrame(all_model_k_data)
+
+            # Create subplot for k values
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+
+            # Plot 1: Best k for each model
+            sns.barplot(data=df_model_k, x='Task', y='Best_k', hue='Model', ax=ax1)
+            ax1.set_title('Best k Features for Each Model by Task (Windowed)', fontweight='bold')
+            ax1.set_ylabel('Best k Features')
+            ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+            # Plot 2: F1 scores at best k
+            sns.barplot(data=df_model_k, x='Task', y='F1_Score', hue='Model', ax=ax2)
+            ax2.set_title('F1-Score at Best k for Each Model (Windowed)', fontweight='bold')
+            ax2.set_ylabel('F1-Score')
+            ax2.set_ylim(0, 1)
+            ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+            plt.tight_layout()
+            plt.savefig('./outputs/ml_plots/windowed_best_k_analysis.png', dpi=300, bbox_inches='tight')
+            plt.close()
+            print("📊 Saved: windowed_best_k_analysis.png")
 
 def plot_top3_feature_importance(results_dict, analyser_type):
     """
@@ -1193,7 +1293,7 @@ def plot_top3_feature_importance(results_dict, analyser_type):
         One of {"windowed", "non_windowed"} – used for file names only.
     """
     if not results_dict:
-        print("❌  Nothing to plot – run the ML analysis first.")
+        print("❌ Nothing to plot – run the ML analysis first.")
         return
 
     os.makedirs("./outputs/ml_plots", exist_ok=True)
@@ -1207,7 +1307,6 @@ def plot_top3_feature_importance(results_dict, analyser_type):
             feature_short = feat.split("_")[0] if "_" in feat else feat
             # Add rank to make it unique if needed
             unique_feature = f"{feature_short}_r{rank}"
-
             rows.append(
                 dict(
                     Task=task.replace("_", " ").title(),
@@ -1219,9 +1318,8 @@ def plot_top3_feature_importance(results_dict, analyser_type):
             )
 
     df = pd.DataFrame(rows)
-
     if df.empty:
-        print("❌  No feature data to plot.")
+        print("❌ No feature data to plot.")
         return
 
     # --- FIGURE 1 : grouped bar chart ------------------------------------
@@ -1242,6 +1340,7 @@ def plot_top3_feature_importance(results_dict, analyser_type):
     plt.legend(title="Feature Type", bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
     bar_path = f"./outputs/ml_plots/{analyser_type}_top3_features_bar.png"
+    plt.show()
     plt.savefig(bar_path, dpi=300, bbox_inches='tight')
     plt.close()
 
@@ -1265,7 +1364,6 @@ def plot_top3_feature_importance(results_dict, analyser_type):
         if pivot_data:
             pivot_df = pd.DataFrame(pivot_data)
             pivot = pivot_df.pivot(index="Feature", columns="Task", values="Rank")
-
             plt.figure(figsize=(10, max(4, 0.6 * len(pivot))))
             sns.heatmap(pivot, annot=True, cmap="YlGnBu_r", cbar=True,
                         fmt=".0f", linewidths=0.5, cbar_kws={'label': 'Rank (1=best)'})
@@ -1275,21 +1373,20 @@ def plot_top3_feature_importance(results_dict, analyser_type):
             plt.xlabel("Task")
             plt.tight_layout()
             heat_path = f"./outputs/ml_plots/{analyser_type}_top3_features_heat.png"
+            plt.show()
             plt.savefig(heat_path, dpi=300, bbox_inches='tight')
             plt.close()
-
-            print(f"✅  Saved feature-importance plots:\n   • {bar_path}\n   • {heat_path}")
+            print(f"✅ Saved feature-importance plots:\n • {bar_path}\n • {heat_path}")
         else:
-            print(f"✅  Saved feature-importance plot:\n   • {bar_path}")
-            print("⚠️  Could not create heatmap due to insufficient data")
+            print(f"✅ Saved feature-importance plot:\n • {bar_path}")
+            print("⚠️ Could not create heatmap due to insufficient data")
 
     except Exception as e:
-        print(f"✅  Saved feature-importance plot:\n   • {bar_path}")
-        print(f"⚠️  Could not create heatmap: {str(e)}")
+        print(f"✅ Saved feature-importance plot:\n • {bar_path}")
+        print(f"⚠️ Could not create heatmap: {str(e)}")
 
     # --- FIGURE 3: Detailed feature table -------------------------------
     plt.figure(figsize=(14, max(6, len(df) * 0.3)))
-
     # Create a detailed table showing all features
     table_data = []
     for _, row in df.iterrows():
@@ -1304,13 +1401,11 @@ def plot_top3_feature_importance(results_dict, analyser_type):
         fig, ax = plt.subplots(figsize=(14, max(6, len(table_data) * 0.4)))
         ax.axis('tight')
         ax.axis('off')
-
         table = ax.table(cellText=table_data,
                          colLabels=['Task', 'Rank', 'Feature Name'],
                          cellLoc='left',
                          loc='center',
                          colWidths=[0.2, 0.1, 0.7])
-
         table.auto_set_font_size(False)
         table.set_fontsize(9)
         table.scale(1.2, 1.8)
@@ -1330,9 +1425,82 @@ def plot_top3_feature_importance(results_dict, analyser_type):
 
         plt.title(f'Top-3 Features by Task ({analyser_type})',
                   fontsize=14, fontweight='bold', pad=20)
-
         table_path = f"./outputs/ml_plots/{analyser_type}_top3_features_table.png"
+        plt.show()
         plt.savefig(table_path, dpi=300, bbox_inches='tight')
         plt.close()
+        print(f" • {table_path}")
 
-        print(f"   • {table_path}")
+def run_complete_ml_analysis(data_dict):
+    """
+    Run both non-windowed and windowed ML analysis with comprehensive reporting
+    """
+    print("🚀 Starting Complete Machine Learning Analysis")
+    print("=" * 80)
+
+    # Non-windowed analysis
+    print("\n🔍 Phase 1: Non-Windowed Analysis")
+    non_windowed_analyzer = NonWindowedMLAnalyzer(data_dict)
+    non_windowed_results = non_windowed_analyzer.run_non_windowed_ml_analysis()
+
+    # Create plots for non-windowed
+    print("\n📊 Creating Non-Windowed Plots...")
+    non_windowed_analyzer.create_individual_plots()
+
+    # Plot feature importance for non-windowed
+    plot_top3_feature_importance(non_windowed_results, "non_windowed")
+
+    # Windowed analysis
+    print("\n🔍 Phase 2: Windowed Analysis")
+    windowed_analyzer = WindowedMLAnalyzer(data_dict)
+    windowed_results = windowed_analyzer.run_windowed_ml_analysis()
+
+    # Create plots for windowed
+    print("\n📊 Creating Windowed Plots...")
+    windowed_analyzer.create_individual_plots()
+
+    # Plot feature importance for windowed
+    plot_top3_feature_importance(windowed_results, "windowed")
+
+    # Final comparison
+    print("\n" + "=" * 80)
+    print("🎯 FINAL COMPARISON: NON-WINDOWED vs WINDOWED")
+    print("=" * 80)
+
+    comparison_data = []
+    for task in set(list(non_windowed_results.keys()) + list(windowed_results.keys())):
+        row = {'Task': task.replace('_', ' ').title()}
+
+        if task in non_windowed_results:
+            nw_result = non_windowed_results[task]
+            row['NW_Model'] = nw_result['best_model']
+            row['NW_k_features'] = nw_result['best_k_features']
+            row['NW_F1'] = f"{nw_result['best_f1_score']:.3f}"
+            row['NW_Accuracy'] = f"{nw_result['best_accuracy']:.3f}"
+            row['NW_Samples'] = nw_result['n_samples']
+        else:
+            row.update({'NW_Model': 'N/A', 'NW_k_features': 'N/A', 'NW_F1': 'N/A', 'NW_Accuracy': 'N/A', 'NW_Samples': 'N/A'})
+
+        if task in windowed_results:
+            w_result = windowed_results[task]
+            row['W_Model'] = w_result['best_model']
+            row['W_k_features'] = w_result['best_k_features']
+            row['W_F1'] = f"{w_result['best_f1_score']:.3f}"
+            row['W_Accuracy'] = f"{w_result['best_accuracy']:.3f}"
+            row['W_Windows'] = w_result['n_windows']
+        else:
+            row.update({'W_Model': 'N/A', 'W_k_features': 'N/A', 'W_F1': 'N/A', 'W_Accuracy': 'N/A', 'W_Windows': 'N/A'})
+
+        comparison_data.append(row)
+
+    comparison_df = pd.DataFrame(comparison_data)
+    print(comparison_df.to_string(index=False))
+
+    print(f"\n✅ Analysis Complete! All plots saved to './outputs/ml_plots/'")
+    print(f"📁 Total files created: Check the outputs/ml_plots directory")
+
+    return {
+        'non_windowed_results': non_windowed_results,
+        'windowed_results': windowed_results,
+        'comparison_df': comparison_df
+    }
