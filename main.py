@@ -6,7 +6,7 @@ import os
 import glob
 import pandas as pd
 from src.analyzer import MovellaAnalyzer
-from src.ml_analyzer import NonWindowedMLAnalyzer, WindowedMLAnalyzer, plot_top3_feature_importance
+from src.ml_analyzer import run_complete_ml_analysis
 from src.vis.accelerometer_visualizer import create_dash_app
 from src.vis.enhanced_visualizer import create_enhanced_visualizations
 from src.vis.enhanced_visualizer_new import create_all_new_visualizations
@@ -211,37 +211,8 @@ def main():
     kmeans_results = run_kmeans_analysis(data)
 
     # 6. Supervised ML Analysis
-    non_windowed_analyzer = NonWindowedMLAnalyzer(data)
-    non_windowed_features_df = non_windowed_analyzer.create_non_windowed_dataset()
+    run_complete_ml_analysis(data)
 
-    feature_cols = [col for col in non_windowed_features_df.columns
-                    if col not in ['participant_id', 'task', 'condition', 'label']]
-    print(f"\nExtracted Features ({len(feature_cols)} total):")
-    print(f"Sample features: {feature_cols}")
-
-    print(f"\nData Distribution by Task and Condition:")
-    task_summary = non_windowed_features_df.groupby(['task', 'condition']).size().unstack(fill_value=0)
-    print(task_summary)
-
-    non_windowed_analyzer.run_non_windowed_ml_analysis()
-    non_windowed_results = non_windowed_analyzer.run_non_windowed_ml_analysis()
-    plot_top3_feature_importance(non_windowed_results, "non_windowed")
-
-    windowed_analyzer = WindowedMLAnalyzer(data)
-    windowed_features_df = windowed_analyzer.create_windowed_dataset()
-
-    feature_cols = [col for col in windowed_features_df.columns
-                    if col not in ['participant_id', 'task', 'condition', 'label', 'window_id']]
-    print(f"\nExtracted Features ({len(feature_cols)} total):")
-    print(f"Sample features: {feature_cols}")
-
-    print(f"\nData Distribution by Task and Condition:")
-    task_summary = windowed_features_df.groupby(['task', 'condition']).size().unstack(fill_value=0)
-    print(task_summary)
-
-    windowed_results = windowed_analyzer.run_windowed_ml_analysis()
-    windowed_analyzer.create_individual_plots()
-    plot_top3_feature_importance(windowed_results, "windowed")
 
 
 if __name__ == "__main__":
