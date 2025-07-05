@@ -211,12 +211,12 @@ class NonWindowedMLAnalyzer:
             print(f"   🏷️ Labels: {y.value_counts().to_dict()}")
 
             # Feature selection
-            k_features = min(8, len(feature_cols))
+            k_features = min(15, len(feature_cols))
             selector = SelectKBest(score_func=f_classif, k=k_features)
             X_selected = selector.fit_transform(X, y)
             selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
 
-            print(f"   🔍 Selected top {k_features} features:")
+            print(f"   🔍 Selected top {k_features} features: {selected_features}")
             for i, feat in enumerate(selected_features[:5]):
                 score = selector.scores_[selector.get_support()][i]
                 print(f"      {feat}: {score:.2f}")
@@ -792,7 +792,7 @@ class WindowedMLAnalyzer:
             X_selected = selector.fit_transform(X, y)
             selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
 
-            print(f"   🔍 Selected top {k_features} features:")
+            print(f"   🔍 Selected top {k_features} features: {selected_features}")
             for i, feat in enumerate(selected_features[:5]):
                 score = selector.scores_[selector.get_support()][i]
                 print(f"      {feat}: {score:.2f}")
