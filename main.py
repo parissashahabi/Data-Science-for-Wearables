@@ -6,7 +6,7 @@ import os
 import glob
 import pandas as pd
 from src.analyzer import MovellaAnalyzer
-from src.ml_analyzer import NonWindowedMLAnalyzer, WindowedMLAnalyzer
+from src.ml_analyzer import NonWindowedMLAnalyzer, WindowedMLAnalyzer, plot_top3_feature_importance
 from src.vis.accelerometer_visualizer import create_dash_app
 from src.vis.enhanced_visualizer import create_enhanced_visualizations
 from src.vis.enhanced_visualizer_new import create_all_new_visualizations
@@ -14,10 +14,12 @@ from src.vis.visualizer import Visualizer
 from src.kmeans_analyzer import run_kmeans_analysis
 from src.vis.slope_graph_visualizer import create_slope_graphs, create_single_slope_graph
 
+
 def setup_directories():
     """Create necessary output directories."""
     os.makedirs("outputs", exist_ok=True)
     os.makedirs("outputs/normality_plots", exist_ok=True)
+
 
 def explore_data_structure(base_dir):
     """Explore the data structure and return important information."""
@@ -34,9 +36,10 @@ def explore_data_structure(base_dir):
 
     return recordings_df, csv_files
 
+
 def load_data_files(recordings_df, base_dir):
     """Associate data files with participants and tasks."""
-    
+
     # Extract participant IDs and names from the Note column
     recordings_df['Participant_ID'] = recordings_df['Note'].str.extract(r'P(\d+)').astype(str)
     recordings_df['Participant_Name'] = recordings_df['Note'].str.extract(r'P\d+:\s*(\w+)')
@@ -91,12 +94,13 @@ def load_data_files(recordings_df, base_dir):
 
     return data
 
+
 def print_data_summary(data):
     """Print summary of loaded data."""
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("DATA LOADING SUMMARY")
-    print("="*50)
-    
+    print("=" * 50)
+
     for task_type in data:
         if data[task_type]:
             print(f"\n✅ {task_type.replace('_', ' ').title()}: {len(data[task_type])} participants")
@@ -107,6 +111,7 @@ def print_data_summary(data):
         else:
             print(f"\n❌ {task_type.replace('_', ' ').title()}: No data found")
 
+
 def main():
     """Main execution function - simple and clean."""
     print("🚀 TECHNICAL REPORT: DUAL-TASK PARADIGM ANALYSIS")
@@ -116,10 +121,10 @@ def main():
 
     # Setup
     setup_directories()
-    
+
     # Data directory
     base_dir = "data"
-    
+
     if not os.path.exists(base_dir):
         print(f"❌ Error: Data directory '{base_dir}' not found!")
         print("Please ensure your data directory exists and update the base_dir variable in main.py")
@@ -139,7 +144,7 @@ def main():
     if not any(data.values()):
         print("❌ No data was loaded. Please check your data directory structure.")
         return
-    
+
     # 2. Visualize Data
     print("\n📊 Step 2: Generating visualizations...")
     visualizer = Visualizer()
@@ -160,16 +165,16 @@ def main():
     print("• Task 1 - Sit-to-Stand: 30s repetitions + Stroop Task")
     print("• Task 2 - Water Task: Execution time & smoothness + Verbal Fluency (Fruits)")
     print("• Task 3 - Step Count: 30s walking + Task Switching")
-    
+
     try:
         analyzer = MovellaAnalyzer(data)
         results = analyzer.run_technical_report_analysis()
-        
+
         print(f"\n🎉 Analysis complete!")
         print(f"\n📁 Generated files in 'outputs/' directory:")
         print("   • normality_plots/: Q-Q plots and ECDF visualizations")
         print("   • Console output: Detailed statistical results")
-        
+
         # Print final summary
         print(f"\n📋 ANALYSIS SUMMARY:")
         task_count = 0
@@ -179,13 +184,13 @@ def main():
                 print(f"   ✅ {task_name.replace('_', ' ').title()}: Analysis completed")
             else:
                 print(f"   ❌ {task_name.replace('_', ' ').title()}: Insufficient data")
-        
+
         print(f"\n🏆 Successfully analyzed {task_count} task(s)")
         print("\n💡 CLINICAL IMPLICATIONS:")
         print("   • Significant results indicate cognitive-motor interference")
         print("   • Effect sizes help determine clinical relevance")
         print("   • Dual-task deficits may predict fall risk and functional decline")
-        
+
     except Exception as e:
         print(f"❌ Error during analysis: {e}")
         import traceback
@@ -204,6 +209,40 @@ def main():
     # 5. Clustering Analysis
     print("\n🔍 Step 5: Running clustering analysis...")
     kmeans_results = run_kmeans_analysis(data)
+
+    # 6. Supervised ML Analysis
+    non_windowed_analyzer = NonWindowedMLAnalyzer(data)
+    non_windowed_features_df = non_windowed_analyzer.create_non_windowed_dataset()
+
+    feature_cols = [col for col in non_windowed_features_df.columns
+                    if col not in ['participant_id', 'task', 'condition', 'label']]
+    print(f"\nExtracted Features ({len(feature_cols)} total):")
+    print(f"Sample features: {feature_cols}")
+
+    print(f"\nData Distribution by Task and Condition:")
+    task_summary = non_windowed_features_df.groupby(['task', 'condition']).size().unstack(fill_value=0)
+    print(task_summary)
+
+    non_windowed_analyzer.run_non_windowed_ml_analysis()
+    non_windowed_results = non_windowed_analyzer.run_non_windowed_ml_analysis()
+    plot_top3_feature_importance(non_windowed_results, "non_windowed")
+
+    windowed_analyzer = WindowedMLAnalyzer(data)
+    windowed_features_df = windowed_analyzer.create_windowed_dataset()
+
+    feature_cols = [col for col in windowed_features_df.columns
+                    if col not in ['participant_id', 'task', 'condition', 'label', 'window_id']]
+    print(f"\nExtracted Features ({len(feature_cols)} total):")
+    print(f"Sample features: {feature_cols}")
+
+    print(f"\nData Distribution by Task and Condition:")
+    task_summary = windowed_features_df.groupby(['task', 'condition']).size().unstack(fill_value=0)
+    print(task_summary)
+
+    windowed_results = windowed_analyzer.run_windowed_ml_analysis()
+    windowed_analyzer.create_individual_plots()
+    plot_top3_feature_importance(windowed_results, "windowed")
+
 
 if __name__ == "__main__":
     main()
