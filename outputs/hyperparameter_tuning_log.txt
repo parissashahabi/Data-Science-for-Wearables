@@ -1,0 +1,1199 @@
+C:\Users\Anton\PycharmProjects\Data-Science-for-Wearables\venv\Scripts\python.exe C:\Users\Anton\PycharmProjects\Data-Science-for-Wearables\main.py
+🚀 TECHNICAL REPORT: DUAL-TASK PARADIGM ANALYSIS
+======================================================================
+Testing cognitive-motor interference in functional tasks
+======================================================================
+
+📂 Step 1: Loading and exploring data...
+Exploring data structure...
+Found 82 CSV files
+
+Recordings metadata:
+                                     ID  ...            Period.End
+0  0196e327-c931-b237-64a5-f86946e446ff  ...  2025-05-18T11:30:04Z
+1  0196e31a-8dd4-a3e6-a29e-8466e028cc92  ...  2025-05-18T11:15:25Z
+2  0196e324-6ecc-fe3c-6174-1cb9ae23498f  ...  2025-05-18T11:26:09Z
+3  0196e326-2d9e-68ba-c5ac-298bc227b3c0  ...  2025-05-18T11:28:05Z
+4  0196e32d-109c-328e-4c97-a6b3d94eeded  ...  2025-05-18T11:35:33Z
+
+[5 rows x 5 columns]
+Loaded step_count_challenge data for Participant 2 (Parisa) from 2025-05-18T11_29_17Z-step_count_challenge
+Loaded step_count data for Participant 1 (Anton) from 2025-05-18T11_14_50Z-step_count
+Loaded step_count_challenge data for Participant 1 (Anton) from 2025-05-18T11_25_37Z-step_count_challenge
+Loaded step_count data for Participant 2 (Parisa) from 2025-05-18T11_27_32Z-step_count
+Loaded sit_to_stand data for Participant 1 (Anton) from 2025-05-18T11_35_03Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 1 (Anton) from 2025-05-18T11_37_44Z-sit_to_stand_challenge
+Loaded step_count data for Participant 3 (Idrees) from 2025-05-18T11_41_47Z-step_count
+Loaded step_count_challenge data for Participant 3 (Idrees) from 2025-05-18T11_43_53Z-step_count_challenge
+Loaded sit_to_stand data for Participant 3 (Idrees) from 2025-05-18T11_47_01Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 3 (Idrees) from 2025-05-18T11_49_02Z-sit_to_stand_challenge
+Loaded water_task_challenge data for Participant 3 (Idrees) from 2025-05-18T11_55_16Z-water_task_challenge
+Loaded water_task data for Participant 3 (Idrees) from 2025-05-18T11_53_58Z-water_task
+Loaded sit_to_stand data for Participant 2 (Parisa) from 2025-05-18T12_00_32Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 2 (Parisa) from 2025-05-18T12_01_30Z-sit_to_stand_challenge
+Loaded water_task data for Participant 1 (Anton) from 2025-05-18T12_06_49Z-water_task
+Loaded water_task data for Participant 2 (Parisa) from 2025-05-18T12_10_57Z-water_task
+Loaded water_task_challenge data for Participant 2 (Parisa) from 2025-05-18T12_12_21Z-water_task_challenge
+Loaded water_task_challenge data for Participant 1 (Anton) from 2025-05-18T12_08_15Z-water_task_challenge
+Loaded step_count data for Participant 4 (Benno) from 2025-05-21T11_23_32Z-step_count
+Loaded step_count_challenge data for Participant 4 (Benno) from 2025-05-21T11_24_33Z-step_count_challenge
+Loaded sit_to_stand data for Participant 4 (Benno) from 2025-05-21T11_29_36Z-sit_to_stand
+Loaded step_count data for Participant 5 (Jo) from 2025-05-21T11_26_45Z-step_count
+Loaded step_count_challenge data for Participant 5 (Jo) from 2025-05-21T11_27_34Z-step_count_challenge
+Loaded sit_to_stand_challenge data for Participant 6 (Anton) from 2025-05-21T14_07_42Z-sit_to_stand_challenge
+Loaded water_task data for Participant 6 (Anton) from 2025-05-21T14_09_42Z-water_task
+Loaded water_task_challenge data for Participant 6 (Anton) from 2025-05-21T14_10_43Z-water_task_challenge
+Loaded step_count data for Participant 6 (Anton) from 2025-05-21T14_04_15Z-step_count
+Loaded step_count_challenge data for Participant 6 (Anton) from 2025-05-21T14_05_03Z-step_count_challenge
+Loaded sit_to_stand data for Participant 6 (Anton) from 2025-05-21T14_06_28Z-sit_to_stand
+Loaded water_task data for Participant 7 (Constantin) from 2025-06-18T12_56_44Z-water_task
+Loaded water_task_challenge data for Participant 7 (Constantin) from 2025-06-18T12_58_19Z-water_task_challenge
+Loaded sit_to_stand data for Participant 7 (Constantin) from 2025-06-18T13_01_04Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 7 (Constantin) from 2025-06-18T13_03_00Z-sit_to_stand_challenge
+Loaded step_count data for Participant 7 (Constantin) from 2025-06-18T13_04_17Z-step_count
+Loaded step_count_challenge data for Participant 7 (Constantin) from 2025-06-18T13_05_24Z-step_count_challenge
+Loaded step_count data for Participant 8 (Anton) from 2025-06-18T13_11_41Z-step_count
+Loaded step_count_challenge data for Participant 8 (Anton) from 2025-06-18T13_12_46Z-step_count_challenge
+Loaded water_task data for Participant 8 (Anton) from 2025-06-18T13_14_32Z-water_task
+Loaded water_task_challenge data for Participant 8 (Anton) from 2025-06-18T13_16_00Z-water_task_challenge
+Loaded sit_to_stand data for Participant 8 (Anton) from 2025-06-18T13_17_06Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 8 (Anton) from 2025-06-18T13_18_06Z-sit_to_stand_challenge
+Loaded step_count data for Participant 9 (Thomas) from 2025-06-18T13_52_42Z-step_count
+Loaded step_count_challenge data for Participant 9 (Thomas) from 2025-06-18T13_53_53Z-step_count_challenge
+Loaded sit_to_stand_challenge data for Participant 9 (Thomas) from 2025-06-18T13_48_40Z-sit_to_stand_challenge
+Loaded water_task data for Participant 9 (Thomas) from 2025-06-18T13_50_35Z-water_task
+Loaded water_task_challenge data for Participant 9 (Thomas) from 2025-06-18T13_51_32Z-water_task_challenge
+Loaded sit_to_stand data for Participant 9 (Thomas) from 2025-06-18T13_47_29Z-sit_to_stand
+Loaded step_count data for Participant 10 (Thomas) from 2025-06-18T13_58_49Z-step_count
+Loaded step_count_challenge data for Participant 10 (Thomas) from 2025-06-18T13_59_45Z-step_count_challenge
+Loaded sit_to_stand data for Participant 10 (Thomas) from 2025-06-18T14_01_09Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 10 (Thomas) from 2025-06-18T14_02_47Z-sit_to_stand_challenge
+Loaded water_task data for Participant 10 (Thomas) from 2025-06-18T14_06_52Z-water_task
+Loaded water_task_challenge data for Participant 10 (Thomas) from 2025-06-18T14_08_13Z-water_task_challenge
+Loaded sit_to_stand_challenge data for Participant 11 (Nico) from 2025-06-18T13_42_39Z-sit_to_stand_challenge
+Loaded step_count_challenge data for Participant 11 (Nico) from 2025-06-18T13_36_09Z-step_count_challenge
+Loaded water_task data for Participant 11 (Nico) from 2025-06-18T13_38_30Z-water_task
+Loaded water_task_challenge data for Participant 11 (Nico) from 2025-06-18T13_39_36Z-water_task_challenge
+Loaded sit_to_stand data for Participant 11 (Nico) from 2025-06-18T13_41_14Z-sit_to_stand
+Loaded step_count data for Participant 11 (Nico) from 2025-06-18T13_34_55Z-step_count
+Loaded water_task data for Participant 4 (Benno) from 2025-06-23T12_44_18Z-water_task
+Loaded water_task_challenge data for Participant 4 (Benno) from 2025-06-23T12_46_21Z-water_task_challenge
+Loaded sit_to_stand data for Participant 4 (Benno) from 2025-06-23T12_47_28Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 4 (Benno) from 2025-06-23T12_49_17Z-sit_to_stand_challenge
+Loaded water_task data for Participant 13 (Dennis) from 2025-06-23T13_05_10Z-water_task
+Loaded water_task_challenge data for Participant 13 (Dennis) from 2025-06-23T13_06_51Z-water_task_challenge
+Loaded step_count data for Participant 13 (Dennis) from 2025-06-23T13_08_34Z-step_count
+Loaded step_count_challenge data for Participant 13 (Dennis) from 2025-06-23T13_09_40Z-step_count_challenge
+Loaded sit_to_stand data for Participant 13 (Dennis) from 2025-06-23T12_56_30Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 13 (Dennis) from 2025-06-23T12_59_18Z-sit_to_stand_challenge
+Loaded water_task data for Participant 12 (Andrea) from 2025-06-23T13_25_54Z-water_task
+Loaded water_task_challenge data for Participant 12 (Andrea) from 2025-06-23T13_26_57Z-water_task_challenge
+Loaded step_count data for Participant 12 (Andrea) from 2025-06-23T13_19_25Z-step_count
+Loaded step_count_challenge data for Participant 12 (Andrea) from 2025-06-23T13_20_31Z-step_count_challenge
+Loaded sit_to_stand data for Participant 12 (Andrea) from 2025-06-23T13_22_50Z-sit_to_stand
+Loaded sit_to_stand_challenge data for Participant 12 (Andrea) from 2025-06-23T13_24_30Z-sit_to_stand_challenge
+
+==================================================
+DATA LOADING SUMMARY
+==================================================
+
+✅ Step Count: 13 participants
+   P1 (Anton): 1466 rows, 4 columns
+   P2 (Parisa): 1468 rows, 4 columns
+   P3 (Idrees): 1465 rows, 4 columns
+   P4 (Benno): 1441 rows, 4 columns
+   P5 (Jo): 1461 rows, 4 columns
+   P6 (Anton): 1464 rows, 4 columns
+   P7 (Constantin): 1229 rows, 4 columns
+   P8 (Anton): 1214 rows, 4 columns
+   P9 (Thomas): 1223 rows, 4 columns
+   P10 (Thomas): 1204 rows, 4 columns
+   P11 (Nico): 1227 rows, 4 columns
+   P13 (Dennis): 1449 rows, 4 columns
+   P12 (Andrea): 1464 rows, 4 columns
+
+✅ Step Count Challenge: 13 participants
+   P2 (Parisa): 1468 rows, 4 columns
+   P1 (Anton): 1463 rows, 4 columns
+   P3 (Idrees): 1453 rows, 4 columns
+   P4 (Benno): 1436 rows, 4 columns
+   P5 (Jo): 1434 rows, 4 columns
+   P6 (Anton): 1453 rows, 4 columns
+   P7 (Constantin): 1190 rows, 4 columns
+   P8 (Anton): 1194 rows, 4 columns
+   P9 (Thomas): 1231 rows, 4 columns
+   P10 (Thomas): 1232 rows, 4 columns
+   P11 (Nico): 1231 rows, 4 columns
+   P13 (Dennis): 1467 rows, 4 columns
+   P12 (Andrea): 1461 rows, 4 columns
+
+✅ Sit To Stand: 12 participants
+   P1 (Anton): 1793 rows, 5 columns
+   P3 (Idrees): 1789 rows, 5 columns
+   P2 (Parisa): 1781 rows, 5 columns
+   P4 (Benno): 5412 rows, 5 columns
+   P6 (Anton): 3592 rows, 5 columns
+   P7 (Constantin): 3582 rows, 5 columns
+   P8 (Anton): 3586 rows, 5 columns
+   P9 (Thomas): 3596 rows, 5 columns
+   P10 (Thomas): 3574 rows, 5 columns
+   P11 (Nico): 3592 rows, 5 columns
+   P13 (Dennis): 5412 rows, 5 columns
+   P12 (Andrea): 5394 rows, 5 columns
+
+✅ Sit To Stand Challenge: 12 participants
+   P1 (Anton): 1795 rows, 5 columns
+   P3 (Idrees): 1789 rows, 5 columns
+   P2 (Parisa): 1781 rows, 5 columns
+   P6 (Anton): 3590 rows, 5 columns
+   P7 (Constantin): 3575 rows, 5 columns
+   P8 (Anton): 3596 rows, 5 columns
+   P9 (Thomas): 3590 rows, 5 columns
+   P10 (Thomas): 3586 rows, 5 columns
+   P11 (Nico): 3586 rows, 5 columns
+   P4 (Benno): 5415 rows, 5 columns
+   P13 (Dennis): 5415 rows, 5 columns
+   P12 (Andrea): 5421 rows, 5 columns
+
+✅ Water Task: 12 participants
+   P3 (Idrees): 1238 rows, 5 columns
+   P1 (Anton): 1211 rows, 5 columns
+   P2 (Parisa): 992 rows, 5 columns
+   P6 (Anton): 2132 rows, 5 columns
+   P7 (Constantin): 2426 rows, 5 columns
+   P8 (Anton): 1912 rows, 5 columns
+   P9 (Thomas): 2402 rows, 5 columns
+   P10 (Thomas): 2134 rows, 5 columns
+   P11 (Nico): 2110 rows, 5 columns
+   P4 (Benno): 4071 rows, 5 columns
+   P13 (Dennis): 2868 rows, 5 columns
+   P12 (Andrea): 3300 rows, 5 columns
+
+✅ Water Task Challenge: 12 participants
+   P3 (Idrees): 1139 rows, 5 columns
+   P2 (Parisa): 1001 rows, 5 columns
+   P1 (Anton): 1256 rows, 5 columns
+   P6 (Anton): 2402 rows, 5 columns
+   P7 (Constantin): 2242 rows, 5 columns
+   P8 (Anton): 2088 rows, 5 columns
+   P9 (Thomas): 2222 rows, 5 columns
+   P10 (Thomas): 2488 rows, 5 columns
+   P11 (Nico): 2240 rows, 5 columns
+   P4 (Benno): 4011 rows, 5 columns
+   P13 (Dennis): 3165 rows, 5 columns
+   P12 (Andrea): 3414 rows, 5 columns
+🚀 Starting Complete Machine Learning Analysis
+🔧 WITH HYPERPARAMETER TUNING ENABLED
+================================================================================
+
+🔍 Phase 1: Non-Windowed Analysis
+
+📊 Processing step_count (non-windowed)...
+   Found 13 participants with both conditions
+   P4: Normal(1441 samples) + Challenge(1436 samples)
+   P12: Normal(1464 samples) + Challenge(1461 samples)
+   P13: Normal(1449 samples) + Challenge(1467 samples)
+   P2: Normal(1468 samples) + Challenge(1468 samples)
+   P9: Normal(1223 samples) + Challenge(1231 samples)
+   P3: Normal(1465 samples) + Challenge(1453 samples)
+   P11: Normal(1227 samples) + Challenge(1231 samples)
+   P5: Normal(1461 samples) + Challenge(1434 samples)
+   P1: Normal(1466 samples) + Challenge(1463 samples)
+   P6: Normal(1464 samples) + Challenge(1453 samples)
+   P8: Normal(1214 samples) + Challenge(1194 samples)
+   P10: Normal(1204 samples) + Challenge(1232 samples)
+   P7: Normal(1229 samples) + Challenge(1190 samples)
+
+📊 Processing sit_to_stand (non-windowed)...
+   Found 12 participants with both conditions
+   P4: Normal(5412 samples) + Challenge(5415 samples)
+   P12: Normal(5394 samples) + Challenge(5421 samples)
+   P13: Normal(5412 samples) + Challenge(5415 samples)
+   P2: Normal(1781 samples) + Challenge(1781 samples)
+   P9: Normal(3596 samples) + Challenge(3590 samples)
+   P3: Normal(1789 samples) + Challenge(1789 samples)
+   P11: Normal(3592 samples) + Challenge(3586 samples)
+   P1: Normal(1793 samples) + Challenge(1795 samples)
+   P6: Normal(3592 samples) + Challenge(3590 samples)
+   P8: Normal(3586 samples) + Challenge(3596 samples)
+   P10: Normal(3574 samples) + Challenge(3586 samples)
+   P7: Normal(3582 samples) + Challenge(3575 samples)
+
+📊 Processing water_task (non-windowed)...
+   Found 12 participants with both conditions
+   P4: Normal(4071 samples) + Challenge(4011 samples)
+   P12: Normal(3300 samples) + Challenge(3414 samples)
+   P13: Normal(2868 samples) + Challenge(3165 samples)
+   P2: Normal(992 samples) + Challenge(1001 samples)
+   P9: Normal(2402 samples) + Challenge(2222 samples)
+   P3: Normal(1238 samples) + Challenge(1139 samples)
+   P11: Normal(2110 samples) + Challenge(2240 samples)
+   P1: Normal(1211 samples) + Challenge(1256 samples)
+   P6: Normal(2132 samples) + Challenge(2402 samples)
+   P8: Normal(1912 samples) + Challenge(2088 samples)
+   P10: Normal(2134 samples) + Challenge(2488 samples)
+   P7: Normal(2426 samples) + Challenge(2242 samples)
+
+✅ Created non-windowed dataset: 74 samples, 64 features
+
+================================================================================
+🤖 NON-WINDOWED MACHINE LEARNING ANALYSIS
+🔧 WITH HYPERPARAMETER TUNING
+================================================================================
+
+🎯 Analyzing STEP COUNT (Non-Windowed)...
+   📊 Data: 26 recordings, 60 features
+   👥 Participants: 13
+   🏷️ Labels: {0: 13, 1: 13}
+   🔍 Testing k_features values: [1, 2, 4, 8, 16, 32, 60]
+
+   🔬 Testing with k=1 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 50}
+      Random Forest   0.731 0.590 0.577 0.615 0.846 0.808
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.808 0.718 0.692 0.769 0.846 0.846
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 5, 'classifier__weights': 'uniform'}
+      K-NN            0.769 0.667 0.654 0.692 0.846 0.769
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.01}
+      Naive Bayes     0.769 0.692 0.654 0.769 0.769 0.692
+      Best model for k=1: SVM (F1: 0.718)
+
+   🔬 Testing with k=2 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 100}
+      Random Forest   0.692 0.590 0.538 0.692 0.692 0.654
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.769 0.641 0.615 0.692 0.846 0.846
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 7, 'classifier__weights': 'uniform'}
+      K-NN            0.692 0.538 0.500 0.615 0.769 0.731
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.731 0.615 0.577 0.692 0.769 0.846
+      Best model for k=2: SVM (F1: 0.641)
+
+   🔬 Testing with k=4 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.654 0.487 0.462 0.538 0.769 0.577
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.769 0.641 0.615 0.692 0.846 0.923
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 5, 'classifier__weights': 'uniform'}
+      K-NN            0.692 0.487 0.462 0.538 0.846 0.731
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.731 0.615 0.577 0.692 0.769 0.846
+      Best model for k=4: SVM (F1: 0.641)
+
+   🔬 Testing with k=8 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 200}
+      Random Forest   0.615 0.513 0.462 0.615 0.615 0.731
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.769 0.641 0.615 0.692 0.846 0.846
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 5, 'classifier__weights': 'uniform'}
+      K-NN            0.692 0.538 0.500 0.615 0.769 0.654
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.01}
+      Naive Bayes     0.654 0.410 0.385 0.462 0.846 0.846
+      Best model for k=8: SVM (F1: 0.641)
+
+   🔬 Testing with k=16 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.615 0.436 0.385 0.538 0.692 0.769
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.769 0.641 0.615 0.692 0.846 0.615
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 5, 'classifier__weights': 'uniform'}
+      K-NN            0.615 0.462 0.423 0.538 0.692 0.577
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.654 0.410 0.385 0.462 0.846 0.654
+      Best model for k=16: SVM (F1: 0.641)
+
+   🔬 Testing with k=32 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 50}
+      Random Forest   0.615 0.487 0.423 0.615 0.615 0.615
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.769 0.641 0.615 0.692 0.846 0.231
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 11, 'classifier__weights': 'uniform'}
+      K-NN            0.577 0.205 0.192 0.231 0.923 0.692
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.615 0.385 0.346 0.462 0.769 0.885
+      Best model for k=32: SVM (F1: 0.641)
+
+   🔬 Testing with k=60 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.615 0.462 0.423 0.538 0.692 0.615
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.692 0.538 0.500 0.615 0.769 0.231
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 5, 'classifier__weights': 'uniform'}
+      K-NN            0.577 0.359 0.346 0.385 0.769 0.615
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.1}
+      Naive Bayes     0.654 0.462 0.423 0.538 0.769 0.808
+      Best model for k=60: SVM (F1: 0.538)
+
+   🏆 Best Performance for Each Model:
+   Model           Best k   F1-Score   Accuracy
+   --------------------------------------------------
+   Random Forest   1        0.590 0.731
+   SVM             1        0.718 0.808
+   K-NN            1        0.667 0.769
+   Naive Bayes     1        0.692 0.769
+
+   🥇 Overall Best: k=1 with SVM (F1-Score: 0.718)
+   💡 Interpretation: 🟡 Good detection of cognitive-motor interference
+   📊 Confusion Matrix:
+   Predicted    Normal Challenge
+   Normal 11     2
+   Challenge 3      10
+
+🎯 Analyzing SIT TO STAND (Non-Windowed)...
+   📊 Data: 24 recordings, 60 features
+   👥 Participants: 12
+   🏷️ Labels: {0: 12, 1: 12}
+   🔍 Testing k_features values: [1, 2, 4, 8, 16, 32, 60]
+
+   🔬 Testing with k=1 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 50}
+      Random Forest   0.417 0.250 0.208 0.333 0.500 0.542
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.01, 'classifier__kernel': 'rbf'}
+      SVM             0.667 0.667 0.583 0.833 0.500 0.250
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 11, 'classifier__weights': 'uniform'}
+      K-NN            0.542 0.444 0.375 0.583 0.500 0.542
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.625 0.583 0.500 0.750 0.500 0.583
+      Best model for k=1: SVM (F1: 0.667)
+
+   🔬 Testing with k=2 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 50}
+      Random Forest   0.458 0.361 0.292 0.500 0.417 0.458
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 'scale', 'classifier__kernel': 'poly'}
+      SVM             0.500 0.611 0.458 0.917 0.083 0.583
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 11, 'classifier__weights': 'uniform'}
+      K-NN            0.500 0.500 0.375 0.750 0.250 0.708
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.542 0.583 0.458 0.833 0.250 0.667
+      Best model for k=2: SVM (F1: 0.611)
+
+   🔬 Testing with k=4 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.500 0.417 0.333 0.583 0.417 0.542
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.583 0.611 0.500 0.833 0.333 0.583
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 11, 'classifier__weights': 'distance'}
+      K-NN            0.500 0.472 0.375 0.667 0.333 0.500
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.542 0.583 0.458 0.833 0.250 0.667
+      Best model for k=4: SVM (F1: 0.611)
+
+   🔬 Testing with k=8 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 50}
+      Random Forest   0.500 0.389 0.292 0.583 0.417 0.375
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.667 0.667 0.583 0.833 0.500 0.583
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 7, 'classifier__weights': 'uniform'}
+      K-NN            0.500 0.444 0.333 0.667 0.333 0.458
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.458 0.194 0.167 0.250 0.667 0.750
+      Best model for k=8: SVM (F1: 0.667)
+
+   🔬 Testing with k=16 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 200}
+      Random Forest   0.583 0.500 0.417 0.667 0.500 0.542
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 100, 'classifier__gamma': 0.001, 'classifier__kernel': 'rbf'}
+      SVM             0.583 0.500 0.417 0.667 0.500 0.417
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 7, 'classifier__weights': 'uniform'}
+      K-NN            0.500 0.417 0.333 0.583 0.417 0.542
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.500 0.194 0.167 0.250 0.750 0.500
+      Best model for k=16: Random Forest (F1: 0.500)
+
+   🔬 Testing with k=32 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 100}
+      Random Forest   0.500 0.472 0.375 0.667 0.333 0.583
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.1, 'classifier__kernel': 'rbf'}
+      SVM             0.458 0.389 0.292 0.583 0.333 0.708
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 7, 'classifier__weights': 'uniform'}
+      K-NN            0.542 0.500 0.417 0.667 0.417 0.542
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.1}
+      Naive Bayes     0.500 0.139 0.125 0.167 0.833 0.500
+      Best model for k=32: K-NN (F1: 0.500)
+
+   🔬 Testing with k=60 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 100}
+      Random Forest   0.458 0.278 0.208 0.417 0.500 0.500
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 1, 'classifier__kernel': 'poly'}
+      SVM             0.667 0.667 0.583 0.833 0.500 0.542
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 5, 'classifier__weights': 'uniform'}
+      K-NN            0.458 0.361 0.292 0.500 0.417 0.500
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.1}
+      Naive Bayes     0.500 0.222 0.208 0.250 0.750 0.417
+      Best model for k=60: SVM (F1: 0.667)
+
+   🏆 Best Performance for Each Model:
+   Model           Best k   F1-Score   Accuracy
+   --------------------------------------------------
+   Random Forest   16       0.500 0.583
+   SVM             1        0.667 0.667
+   K-NN            2        0.500 0.500
+   Naive Bayes     1        0.583 0.625
+
+   🥇 Overall Best: k=1 with SVM (F1-Score: 0.667)
+   💡 Interpretation: 🟠 Moderate detection of cognitive-motor interference
+   📊 Confusion Matrix:
+   Predicted    Normal Challenge
+   Normal 6      6
+   Challenge 2      10
+
+🎯 Analyzing WATER TASK (Non-Windowed)...
+   📊 Data: 24 recordings, 60 features
+   👥 Participants: 12
+   🏷️ Labels: {0: 12, 1: 12}
+   🔍 Testing k_features values: [1, 2, 4, 8, 16, 32, 60]
+
+   🔬 Testing with k=1 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.625 0.528 0.458 0.667 0.583 0.708
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.625 0.750 0.625 1.000 0.250 0.667
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 5, 'classifier__weights': 'distance'}
+      K-NN            0.708 0.583 0.542 0.667 0.750 0.667
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.625 0.611 0.542 0.750 0.500 0.500
+      Best model for k=1: SVM (F1: 0.750)
+
+   🔬 Testing with k=2 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 100}
+      Random Forest   0.667 0.556 0.500 0.667 0.667 0.792
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.667 0.778 0.667 1.000 0.333 0.667
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 15, 'classifier__weights': 'distance'}
+      K-NN            0.667 0.694 0.625 0.833 0.500 0.667
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.01}
+      Naive Bayes     0.667 0.778 0.667 1.000 0.333 0.417
+      Best model for k=2: SVM (F1: 0.778)
+
+   🔬 Testing with k=4 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 100}
+      Random Forest   0.625 0.528 0.458 0.667 0.583 0.750
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.01, 'classifier__kernel': 'rbf'}
+      SVM             0.583 0.639 0.542 0.833 0.333 0.250
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 15, 'classifier__weights': 'uniform'}
+      K-NN            0.458 0.417 0.333 0.583 0.333 0.458
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.542 0.583 0.500 0.750 0.333 0.500
+      Best model for k=4: SVM (F1: 0.639)
+
+   🔬 Testing with k=8 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 2, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 200}
+      Random Forest   0.583 0.472 0.417 0.583 0.583 0.750
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.1, 'classifier__kernel': 'rbf'}
+      SVM             0.542 0.639 0.542 0.833 0.250 0.417
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 15, 'classifier__weights': 'distance'}
+      K-NN            0.583 0.694 0.583 0.917 0.250 0.500
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.1}
+      Naive Bayes     0.625 0.583 0.500 0.750 0.500 0.583
+      Best model for k=8: K-NN (F1: 0.694)
+
+   🔬 Testing with k=16 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 5, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.500 0.389 0.333 0.500 0.500 0.583
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.001, 'classifier__kernel': 'rbf'}
+      SVM             0.542 0.611 0.500 0.833 0.250 0.583
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 3, 'classifier__weights': 'uniform'}
+      K-NN            0.542 0.500 0.458 0.583 0.500 0.500
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.458 0.361 0.292 0.500 0.417 0.583
+      Best model for k=16: SVM (F1: 0.611)
+
+   🔬 Testing with k=32 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 100}
+      Random Forest   0.375 0.167 0.125 0.250 0.500 0.250
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 'scale', 'classifier__kernel': 'linear'}
+      SVM             0.667 0.722 0.667 0.833 0.500 0.583
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 11, 'classifier__weights': 'uniform'}
+      K-NN            0.458 0.194 0.167 0.250 0.667 0.417
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.417 0.306 0.250 0.417 0.417 0.333
+      Best model for k=32: SVM (F1: 0.722)
+
+   🔬 Testing with k=60 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 50}
+      Random Forest   0.542 0.472 0.417 0.583 0.500 0.417
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 0.1, 'classifier__kernel': 'rbf'}
+      SVM             0.375 0.222 0.167 0.333 0.417 0.750
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 15, 'classifier__weights': 'uniform'}
+      K-NN            0.750 0.778 0.750 0.833 0.667 0.750
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.375 0.250 0.208 0.333 0.417 0.333
+      Best model for k=60: K-NN (F1: 0.778)
+
+   🏆 Best Performance for Each Model:
+   Model           Best k   F1-Score   Accuracy
+   --------------------------------------------------
+   Random Forest   2        0.556 0.667
+   SVM             2        0.778 0.667
+   K-NN            60       0.778 0.750
+   Naive Bayes     2        0.778 0.667
+
+   🥇 Overall Best: k=2 with SVM (F1-Score: 0.778)
+   💡 Interpretation: 🟠 Moderate detection of cognitive-motor interference
+   📊 Confusion Matrix:
+   Predicted    Normal Challenge
+   Normal 4      8
+   Challenge 0      12
+
+================================================================================
+📋 NON-WINDOWED ANALYSIS SUMMARY
+================================================================================
+        Task Best Model  k_features  Samples F1-Score Accuracy Precision Recall ROC-AUC                                       Interpretation
+  Step Count        SVM           1       26    0.718    0.808     0.692  0.769   0.846     🟡 Good detection of cognitive-motor interference
+Sit To Stand        SVM           1       24    0.667    0.667     0.583  0.833   0.250 🟠 Moderate detection of cognitive-motor interference
+  Water Task        SVM           2       24    0.778    0.667     0.667  1.000   0.667 🟠 Moderate detection of cognitive-motor interference
+
+📊 Creating Non-Windowed Plots...
+📊 Saved: non_windowed_f1_comparison.png
+📊 Saved: non_windowed_sample_sizes.png
+📊 Saved: ./outputs/ml_plots/non_windowed_confusion_matrix_step_count_SVM_k1.png
+📊 Saved: ./outputs/ml_plots/non_windowed_confusion_matrix_sit_to_stand_SVM_k1.png
+📊 Saved: ./outputs/ml_plots/non_windowed_confusion_matrix_water_task_SVM_k2.png
+📊 Saved: non_windowed_radar_chart.png
+📊 Saved: non_windowed_model_comparison.png
+📊 Saved: non_windowed_best_k_analysis.png
+✅ Saved feature-importance plots:
+ • ./outputs/ml_plots/non_windowed_top3_features_bar.png
+ • ./outputs/ml_plots/non_windowed_top3_features_heat.png
+ • ./outputs/ml_plots/non_windowed_top3_features_table.png
+
+🔍 Phase 2: Windowed Analysis
+
+📊 Processing step_count with windowing...
+   Found 13 participants with both conditions
+   P4: 18 normal + 18 challenge = 36 windows
+   P12: 18 normal + 18 challenge = 36 windows
+   P13: 18 normal + 18 challenge = 36 windows
+   P2: 18 normal + 18 challenge = 36 windows
+   P9: 15 normal + 15 challenge = 30 windows
+   P3: 18 normal + 18 challenge = 36 windows
+   P11: 15 normal + 15 challenge = 30 windows
+   P5: 18 normal + 18 challenge = 36 windows
+   P1: 18 normal + 18 challenge = 36 windows
+   P6: 18 normal + 18 challenge = 36 windows
+   P8: 15 normal + 14 challenge = 29 windows
+   P10: 15 normal + 15 challenge = 30 windows
+   P7: 15 normal + 14 challenge = 29 windows
+   Total windows for step_count: 436
+
+📊 Processing sit_to_stand with windowing...
+   Found 12 participants with both conditions
+   P4: 59 normal + 59 challenge = 118 windows
+   P12: 58 normal + 59 challenge = 117 windows
+   P13: 59 normal + 59 challenge = 118 windows
+   P2: 18 normal + 18 challenge = 36 windows
+   P9: 38 normal + 38 challenge = 76 windows
+   P3: 18 normal + 18 challenge = 36 windows
+   P11: 38 normal + 38 challenge = 76 windows
+   P1: 18 normal + 18 challenge = 36 windows
+   P6: 38 normal + 38 challenge = 76 windows
+   P8: 38 normal + 38 challenge = 76 windows
+   P10: 38 normal + 38 challenge = 76 windows
+   P7: 38 normal + 38 challenge = 76 windows
+   Total windows for sit_to_stand: 917
+
+📊 Processing water_task with windowing...
+   Found 12 participants with both conditions
+   P4: 31 normal + 33 challenge = 64 windows
+   P12: 33 normal + 35 challenge = 68 windows
+   P13: 28 normal + 30 challenge = 58 windows
+   P2: 10 normal + 10 challenge = 20 windows
+   P9: 23 normal + 23 challenge = 46 windows
+   P3: 10 normal + 11 challenge = 21 windows
+   P11: 20 normal + 17 challenge = 37 windows
+   P1: 12 normal + 10 challenge = 22 windows
+   P6: 18 normal + 20 challenge = 38 windows
+   P8: 18 normal + 18 challenge = 36 windows
+   P10: 16 normal + 24 challenge = 40 windows
+   P7: 23 normal + 22 challenge = 45 windows
+   Total windows for water_task: 495
+
+✅ Created windowed dataset: 1848 windows, 64 features
+
+================================================================================
+🤖 WINDOWED MACHINE LEARNING ANALYSIS
+🔧 WITH HYPERPARAMETER TUNING
+================================================================================
+
+🎯 Analyzing STEP COUNT (Windowed)...
+   📊 Data: 436 windows, 59 features
+   👥 Participants: 13
+   🏷️ Labels: {0: 219, 1: 217}
+   🔍 Testing k_features values: [1, 2, 4, 8, 16, 32, 59]
+
+   🔬 Testing with k=1 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 2, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 200}
+      Random Forest   0.648 0.573 0.689 0.520 0.774 0.648
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 0.001, 'classifier__kernel': 'rbf'}
+      SVM             0.633 0.511 0.623 0.479 0.785 0.662
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 15, 'classifier__weights': 'uniform'}
+      K-NN            0.590 0.523 0.591 0.502 0.675 0.631
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.632 0.489 0.624 0.447 0.814 0.622
+      Best model for k=1: Random Forest (F1: 0.573)
+
+   🔬 Testing with k=2 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 10, 'classifier__min_samples_leaf': 2, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 100}
+      Random Forest   0.513 0.455 0.539 0.506 0.521 0.581
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 100, 'classifier__gamma': 0.01, 'classifier__kernel': 'rbf'}
+      SVM             0.608 0.536 0.569 0.615 0.602 0.766
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 15, 'classifier__weights': 'distance'}
+      K-NN            0.502 0.458 0.480 0.513 0.491 0.587
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.672 0.574 0.620 0.571 0.774 0.757
+      Best model for k=2: Naive Bayes (F1: 0.574)
+
+   🔬 Testing with k=4 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 50}
+      Random Forest   0.539 0.499 0.566 0.543 0.535 0.589
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 1, 'classifier__kernel': 'rbf'}
+      SVM             0.540 0.487 0.456 0.564 0.517 0.532
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 3, 'classifier__weights': 'distance'}
+      K-NN            0.515 0.460 0.477 0.500 0.531 0.540
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.626 0.527 0.592 0.580 0.674 0.808
+      Best model for k=4: Naive Bayes (F1: 0.527)
+
+   🔬 Testing with k=8 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 200}
+      Random Forest   0.469 0.432 0.439 0.485 0.454 0.544
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 1, 'classifier__kernel': 'rbf'}
+      SVM             0.506 0.427 0.430 0.477 0.536 0.498
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 15, 'classifier__weights': 'distance'}
+      K-NN            0.469 0.417 0.518 0.461 0.478 0.514
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.613 0.445 0.484 0.488 0.739 0.802
+      Best model for k=8: Naive Bayes (F1: 0.445)
+
+   🔬 Testing with k=16 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 10, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.503 0.460 0.487 0.516 0.491 0.547
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 1, 'classifier__kernel': 'rbf'}
+      SVM             0.575 0.578 0.610 0.654 0.500 0.554
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 3, 'classifier__weights': 'distance'}
+      K-NN            0.571 0.539 0.599 0.564 0.581 0.638
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.581 0.362 0.437 0.392 0.771 0.744
+      Best model for k=16: SVM (F1: 0.578)
+
+   🔬 Testing with k=32 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 10, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 200}
+      Random Forest   0.549 0.533 0.543 0.574 0.525 0.575
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 0.1, 'classifier__kernel': 'rbf'}
+      SVM             0.538 0.517 0.594 0.546 0.530 0.532
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 3, 'classifier__weights': 'uniform'}
+      K-NN            0.554 0.511 0.636 0.509 0.600 0.542
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.615 0.413 0.670 0.412 0.818 0.734
+      Best model for k=32: Random Forest (F1: 0.533)
+
+   🔬 Testing with k=59 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.543 0.516 0.555 0.565 0.521 0.578
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 0.1, 'classifier__kernel': 'rbf'}
+      SVM             0.548 0.540 0.553 0.606 0.491 0.508
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 3, 'classifier__weights': 'distance'}
+      K-NN            0.490 0.421 0.533 0.441 0.538 0.516
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.01}
+      Naive Bayes     0.608 0.417 0.587 0.424 0.793 0.709
+      Best model for k=59: SVM (F1: 0.540)
+
+   🏆 Best Performance for Each Model:
+   Model           Best k   F1-Score   Accuracy
+   --------------------------------------------------
+   Random Forest   1        0.573 0.648
+   SVM             16       0.578 0.575
+   K-NN            16       0.539 0.571
+   Naive Bayes     2        0.574 0.672
+
+   🥇 Overall Best: k=16 with SVM (F1-Score: 0.578)
+   💡 Interpretation: 🔴 Weak detection of cognitive-motor interference
+   📊 Confusion Matrix:
+   Predicted    Normal Challenge
+   Normal 112    107
+   Challenge 77     140
+
+🎯 Analyzing SIT TO STAND (Windowed)...
+   📊 Data: 917 windows, 59 features
+   👥 Participants: 12
+   🏷️ Labels: {1: 459, 0: 458}
+   🔍 Testing k_features values: [1, 2, 4, 8, 16, 32, 59]
+
+   🔬 Testing with k=1 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 5, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.447 0.462 0.431 0.535 0.359 0.443
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 0.1, 'classifier__kernel': 'rbf'}
+      SVM             0.505 0.495 0.497 0.568 0.442 0.454
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 15, 'classifier__weights': 'uniform'}
+      K-NN            0.492 0.460 0.461 0.469 0.516 0.487
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.01}
+      Naive Bayes     0.501 0.296 0.525 0.270 0.733 0.481
+      Best model for k=1: SVM (F1: 0.495)
+
+   🔬 Testing with k=2 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 3, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 200}
+      Random Forest   0.486 0.476 0.467 0.609 0.361 0.466
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 0.1, 'classifier__kernel': 'rbf'}
+      SVM             0.553 0.615 0.561 0.803 0.304 0.551
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 5, 'classifier__weights': 'uniform'}
+      K-NN            0.491 0.510 0.489 0.580 0.401 0.480
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.508 0.233 0.526 0.210 0.806 0.454
+      Best model for k=2: SVM (F1: 0.615)
+
+   🔬 Testing with k=4 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 5, 'classifier__min_samples_leaf': 4, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 100}
+      Random Forest   0.480 0.458 0.449 0.554 0.408 0.485
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 100, 'classifier__gamma': 0.01, 'classifier__kernel': 'rbf'}
+      SVM             0.525 0.573 0.536 0.748 0.300 0.528
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 11, 'classifier__weights': 'distance'}
+      K-NN            0.544 0.551 0.543 0.603 0.486 0.535
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.501 0.231 0.531 0.223 0.779 0.475
+      Best model for k=4: SVM (F1: 0.573)
+
+   🔬 Testing with k=8 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 100}
+      Random Forest   0.520 0.527 0.497 0.613 0.427 0.548
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 100, 'classifier__gamma': 'scale', 'classifier__kernel': 'rbf'}
+      SVM             0.553 0.516 0.553 0.551 0.555 0.532
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 11, 'classifier__weights': 'distance'}
+      K-NN            0.541 0.523 0.543 0.555 0.527 0.540
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.501 0.258 0.473 0.242 0.760 0.509
+      Best model for k=8: Random Forest (F1: 0.527)
+
+   🔬 Testing with k=16 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 10, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 100}
+      Random Forest   0.511 0.548 0.503 0.657 0.365 0.509
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 100, 'classifier__gamma': 1, 'classifier__kernel': 'rbf'}
+      SVM             0.527 0.523 0.533 0.564 0.491 0.514
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 3, 'classifier__weights': 'distance'}
+      K-NN            0.505 0.496 0.502 0.536 0.474 0.524
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.01}
+      Naive Bayes     0.487 0.118 0.284 0.129 0.844 0.490
+      Best model for k=16: Random Forest (F1: 0.548)
+
+   🔬 Testing with k=32 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 200}
+      Random Forest   0.484 0.475 0.473 0.527 0.440 0.484
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 100, 'classifier__gamma': 'scale', 'classifier__kernel': 'rbf'}
+      SVM             0.459 0.438 0.448 0.485 0.433 0.442
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 5, 'classifier__weights': 'distance'}
+      K-NN            0.510 0.488 0.506 0.514 0.507 0.527
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.497 0.094 0.175 0.099 0.895 0.527
+      Best model for k=32: K-NN (F1: 0.488)
+
+   🔬 Testing with k=59 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 200}
+      Random Forest   0.518 0.525 0.518 0.609 0.427 0.525
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 0.1, 'classifier__kernel': 'rbf'}
+      SVM             0.498 0.430 0.459 0.487 0.509 0.498
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 11, 'classifier__weights': 'distance'}
+      K-NN            0.529 0.535 0.522 0.619 0.439 0.544
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.499 0.119 0.340 0.121 0.877 0.547
+      Best model for k=59: K-NN (F1: 0.535)
+
+   🏆 Best Performance for Each Model:
+   Model           Best k   F1-Score   Accuracy
+   --------------------------------------------------
+   Random Forest   16       0.548 0.511
+   SVM             2        0.615 0.553
+   K-NN            4        0.551 0.544
+   Naive Bayes     1        0.296 0.501
+
+   🥇 Overall Best: k=2 with SVM (F1-Score: 0.615)
+   💡 Interpretation: 🔴 Weak detection of cognitive-motor interference
+   📊 Confusion Matrix:
+   Predicted    Normal Challenge
+   Normal 144    314
+   Challenge 96     363
+
+🎯 Analyzing WATER TASK (Windowed)...
+   📊 Data: 495 windows, 59 features
+   👥 Participants: 12
+   🏷️ Labels: {1: 253, 0: 242}
+   🔍 Testing k_features values: [1, 2, 4, 8, 16, 32, 59]
+
+   🔬 Testing with k=1 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 2, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 50}
+      Random Forest   0.523 0.538 0.532 0.558 0.484 0.536
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.001, 'classifier__kernel': 'rbf'}
+      SVM             0.508 0.673 0.508 1.000 0.000 0.463
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 11, 'classifier__weights': 'uniform'}
+      K-NN            0.547 0.555 0.557 0.564 0.536 0.555
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.483 0.433 0.485 0.415 0.559 0.482
+      Best model for k=1: SVM (F1: 0.673)
+
+   🔬 Testing with k=2 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 10, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 50}
+      Random Forest   0.481 0.472 0.485 0.471 0.493 0.498
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.1, 'classifier__kernel': 'poly'}
+      SVM             0.528 0.682 0.519 1.000 0.038 0.501
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 3, 'classifier__weights': 'uniform'}
+      K-NN            0.500 0.518 0.511 0.534 0.462 0.500
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.514 0.622 0.526 0.796 0.223 0.519
+      Best model for k=2: SVM (F1: 0.682)
+
+   🔬 Testing with k=4 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': 5, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 50}
+      Random Forest   0.520 0.517 0.530 0.523 0.523 0.538
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.1, 'classifier__kernel': 'poly'}
+      SVM             0.526 0.681 0.518 0.998 0.038 0.549
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 3, 'classifier__weights': 'distance'}
+      K-NN            0.567 0.555 0.584 0.543 0.590 0.572
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.527 0.633 0.526 0.825 0.217 0.544
+      Best model for k=4: SVM (F1: 0.681)
+
+   🔬 Testing with k=8 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 5, 'classifier__min_samples_leaf': 2, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}
+      Random Forest   0.534 0.553 0.565 0.571 0.500 0.550
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 0.1, 'classifier__gamma': 0.1, 'classifier__kernel': 'poly'}
+      SVM             0.512 0.622 0.473 0.912 0.125 0.505
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 3, 'classifier__weights': 'distance'}
+      K-NN            0.577 0.579 0.585 0.579 0.578 0.585
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 1e-09}
+      Naive Bayes     0.510 0.619 0.508 0.818 0.187 0.496
+      Best model for k=8: SVM (F1: 0.622)
+
+   🔬 Testing with k=16 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': True, 'classifier__max_depth': 10, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 5, 'classifier__n_estimators': 50}
+      Random Forest   0.491 0.495 0.512 0.491 0.490 0.505
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 0.01, 'classifier__kernel': 'poly'}
+      SVM             0.528 0.683 0.519 1.000 0.039 0.484
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 3, 'classifier__weights': 'distance'}
+      K-NN            0.545 0.546 0.551 0.551 0.541 0.562
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.1}
+      Naive Bayes     0.509 0.621 0.515 0.804 0.197 0.513
+      Best model for k=16: SVM (F1: 0.683)
+
+   🔬 Testing with k=32 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 2, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 50}
+      Random Forest   0.488 0.502 0.497 0.521 0.451 0.473
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 10, 'classifier__gamma': 0.001, 'classifier__kernel': 'poly'}
+      SVM             0.524 0.681 0.517 1.000 0.031 0.476
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'manhattan', 'classifier__n_neighbors': 7, 'classifier__weights': 'distance'}
+      K-NN            0.540 0.549 0.555 0.556 0.525 0.560
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.1}
+      Naive Bayes     0.499 0.596 0.501 0.767 0.213 0.491
+      Best model for k=32: SVM (F1: 0.681)
+
+   🔬 Testing with k=59 features...
+      Model           Accuracy F1     Precision Recall  Specificity ROC-AUC
+      ----------------------------------------------------------------------
+      🔧 Tuning Random Forest hyperparameters...
+         Best params: {'classifier__bootstrap': False, 'classifier__max_depth': None, 'classifier__min_samples_leaf': 1, 'classifier__min_samples_split': 10, 'classifier__n_estimators': 200}
+      Random Forest   0.545 0.557 0.558 0.565 0.523 0.517
+      🔧 Tuning SVM hyperparameters...
+         Best params: {'classifier__C': 1, 'classifier__gamma': 0.001, 'classifier__kernel': 'rbf'}
+      SVM             0.507 0.672 0.508 0.998 0.000 0.572
+      🔧 Tuning K-NN hyperparameters...
+         Best params: {'classifier__algorithm': 'auto', 'classifier__metric': 'euclidean', 'classifier__n_neighbors': 3, 'classifier__weights': 'distance'}
+      K-NN            0.522 0.526 0.536 0.525 0.515 0.525
+      🔧 Tuning Naive Bayes hyperparameters...
+         Best params: {'classifier__var_smoothing': 0.01}
+      Naive Bayes     0.486 0.563 0.500 0.699 0.260 0.462
+      Best model for k=59: SVM (F1: 0.672)
+
+   🏆 Best Performance for Each Model:
+   Model           Best k   F1-Score   Accuracy
+   --------------------------------------------------
+   Random Forest   59       0.557 0.545
+   SVM             16       0.683 0.528
+   K-NN            8        0.579 0.577
+   Naive Bayes     4        0.633 0.527
+
+   🥇 Overall Best: k=16 with SVM (F1-Score: 0.683)
+   💡 Interpretation: 🔴 Weak detection of cognitive-motor interference
+   📊 Confusion Matrix:
+   Predicted    Normal Challenge
+   Normal 5      237
+   Challenge 0      253
+
+================================================================================
+📋 WINDOWED ANALYSIS SUMMARY
+================================================================================
+        Task Best Model  k_features  Windows F1-Score Accuracy Precision Recall ROC-AUC                                   Interpretation
+  Step Count        SVM          16      436    0.578    0.575     0.610  0.654   0.554 🔴 Weak detection of cognitive-motor interference
+Sit To Stand        SVM           2      917    0.615    0.553     0.561  0.803   0.551 🔴 Weak detection of cognitive-motor interference
+  Water Task        SVM          16      495    0.683    0.528     0.519  1.000   0.484 🔴 Weak detection of cognitive-motor interference
+
+📊 Creating Windowed Plots...
+📊 Saved: windowed_f1_comparison.png
+📊 Saved: windowed_sample_size_comparison.png
+📊 Saved: ./outputs/ml_plots/windowed_confusion_matrix_step_count_SVM_k16.png
+📊 Saved: ./outputs/ml_plots/windowed_confusion_matrix_sit_to_stand_SVM_k2.png
+📊 Saved: ./outputs/ml_plots/windowed_confusion_matrix_water_task_SVM_k16.png
+📊 Saved: windowed_radar_chart.png
+📊 Saved: windowed_participant_distribution.png
+📊 Saved: windowed_model_comparison.png
+📊 Saved: windowed_learning_curves.png
+📊 Saved: windowed_best_k_analysis.png
+✅ Saved feature-importance plots:
+ • ./outputs/ml_plots/windowed_top3_features_bar.png
+ • ./outputs/ml_plots/windowed_top3_features_heat.png
+ • ./outputs/ml_plots/windowed_top3_features_table.png
+
+================================================================================
+🎯 FINAL COMPARISON: NON-WINDOWED vs WINDOWED
+================================================================================
+        Task NW_Model  NW_k_features NW_F1 NW_Accuracy  NW_Samples W_Model  W_k_features  W_F1 W_Accuracy  W_Windows
+Sit To Stand      SVM              1 0.667       0.667          24     SVM             2 0.615      0.553        917
+  Step Count      SVM              1 0.718       0.808          26     SVM            16 0.578      0.575        436
+  Water Task      SVM              2 0.778       0.667          24     SVM            16 0.683      0.528        495
+
+✅ Analysis Complete! All plots saved to './outputs/ml_plots/'
+📁 Total files created: Check the outputs/ml_plots directory
+
+Process finished with exit code 0
