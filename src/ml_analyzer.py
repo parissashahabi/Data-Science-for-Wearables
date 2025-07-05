@@ -29,6 +29,15 @@ warnings.filterwarnings('ignore')
 # Create output directory
 os.makedirs('./outputs/ml_plots', exist_ok=True)
 
+def generate_logarithmic_k_features(total_features):
+    """Generate logarithmic steps for k_features covering all, half, quarter, etc."""
+    k_values = set()
+    k = 1
+    while k < total_features:
+        k_values.add(k)
+        k *= 2
+    k_values.add(total_features)  # Include all features
+    return sorted(k_values)
 
 class NonWindowedMLAnalyzer:
     def __init__(self, data_dict):
@@ -180,7 +189,7 @@ class NonWindowedMLAnalyzer:
         return metrics
 
     def run_non_windowed_ml_analysis(self):
-        """Run ML analysis on non-windowed data"""
+        """Run ML analysis on non-windowed data with logarithmic k_features"""
         if self.features_df is None:
             self.create_non_windowed_dataset()
 
@@ -210,103 +219,119 @@ class NonWindowedMLAnalyzer:
             print(f"   👥 Participants: {len(participant_ids.unique())}")
             print(f"   🏷️ Labels: {y.value_counts().to_dict()}")
 
-            # Feature selection
-            k_features = min(15, len(feature_cols))
-            selector = SelectKBest(score_func=f_classif, k=k_features)
-            X_selected = selector.fit_transform(X, y)
-            selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
+            # Generate logarithmic k_features values
+            k_features_list = generate_logarithmic_k_features(len(feature_cols))
+            print(f"   🔍 Testing k_features values: {k_features_list}")
 
-            print(f"   🔍 Selected top {k_features} features: {selected_features}")
-            for i, feat in enumerate(selected_features[:5]):
-                score = selector.scores_[selector.get_support()][i]
-                print(f"      {feat}: {score:.2f}")
+            best_k_results = {}
 
-            models = {
-                'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, max_depth=3),
-                'SVM': SVC(kernel='rbf', random_state=42, probability=True),
-                'K-NN': KNeighborsClassifier(n_neighbors=3),
-                'Naive Bayes': GaussianNB()
-            }
+            for k_features in k_features_list:
+                print(f"\n   🔬 Testing with k={k_features} features...")
 
-            print(f"   🔄 Leave-One-Subject-Out Cross-Validation:")
-            print(
-                f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
-            print(f"   {'-' * 70}")
+                # Feature selection
+                selector = SelectKBest(score_func=f_classif, k=k_features)
+                X_selected = selector.fit_transform(X, y)
+                selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
 
-            task_results = {}
-            for model_name, model in models.items():
-                pipeline = Pipeline([
-                    ('scaler', StandardScaler()),
-                    ('classifier', model)
-                ])
+                models = {
+                    'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, max_depth=3),
+                    'SVM': SVC(kernel='rbf', random_state=42, probability=True),
+                    'K-NN': KNeighborsClassifier(n_neighbors=3),
+                    'Naive Bayes': GaussianNB()
+                }
 
-                all_metrics = defaultdict(list)
-                unique_participants = participant_ids.unique()
+                k_results = {}
 
-                all_y_true = []
-                all_y_pred = []
-                all_y_pred_proba = []
+                for model_name, model in models.items():
+                    pipeline = Pipeline([
+                        ('scaler', StandardScaler()),
+                        ('classifier', model)
+                    ])
 
-                for test_participant in unique_participants:
-                    train_mask = participant_ids != test_participant
-                    test_mask = participant_ids == test_participant
+                    all_metrics = defaultdict(list)
+                    unique_participants = participant_ids.unique()
+                    all_y_true = []
+                    all_y_pred = []
+                    all_y_pred_proba = []
 
-                    X_train, X_test = X_selected[train_mask], X_selected[test_mask]
-                    y_train, y_test = y[train_mask], y[test_mask]
+                    for test_participant in unique_participants:
+                        train_mask = participant_ids != test_participant
+                        test_mask = participant_ids == test_participant
 
-                    if len(np.unique(y_train)) < 2 or len(y_test) == 0:
-                        continue
+                        X_train, X_test = X_selected[train_mask], X_selected[test_mask]
+                        y_train, y_test = y[train_mask], y[test_mask]
 
-                    pipeline.fit(X_train, y_train)
-                    y_pred = pipeline.predict(X_test)
+                        if len(np.unique(y_train)) < 2 or len(y_test) == 0:
+                            continue
 
-                    try:
-                        y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
-                    except:
-                        y_pred_proba = None
+                        pipeline.fit(X_train, y_train)
+                        y_pred = pipeline.predict(X_test)
 
-                    fold_metrics = self.calculate_comprehensive_metrics(y_test, y_pred, y_pred_proba)
+                        try:
+                            y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
+                        except:
+                            y_pred_proba = None
 
-                    for metric_name, value in fold_metrics.items():
-                        if not np.isnan(value):
-                            all_metrics[metric_name].append(value)
+                        fold_metrics = self.calculate_comprehensive_metrics(y_test, y_pred, y_pred_proba)
 
-                    all_y_true.extend(y_test)
-                    all_y_pred.extend(y_pred)
-                    if y_pred_proba is not None:
-                        all_y_pred_proba.extend(y_pred_proba)
+                        for metric_name, value in fold_metrics.items():
+                            if not np.isnan(value):
+                                all_metrics[metric_name].append(value)
 
-                if all_metrics:
-                    mean_metrics = {metric: np.mean(values) for metric, values in all_metrics.items()}
+                        all_y_true.extend(y_test)
+                        all_y_pred.extend(y_pred)
+                        if y_pred_proba is not None:
+                            all_y_pred_proba.extend(y_pred_proba)
 
-                    print(f"   {model_name:<15} "
-                          f"{mean_metrics['accuracy']:.3f}    "
-                          f"{mean_metrics['f1_score']:.3f}  "
-                          f"{mean_metrics['precision']:.3f}     "
-                          f"{mean_metrics['recall']:.3f}   "
-                          f"{mean_metrics['specificity']:.3f}       "
-                          f"{mean_metrics.get('roc_auc', 0):.3f}")
+                    if all_metrics:
+                        mean_metrics = {metric: np.mean(values) for metric, values in all_metrics.items()}
 
-                    task_results[model_name] = {
-                        'mean_metrics': mean_metrics,
-                        'all_y_true': all_y_true,
-                        'all_y_pred': all_y_pred,
-                        'confusion_matrix': confusion_matrix(all_y_true, all_y_pred),
-                        'n_samples': len(all_y_true)
+                        k_results[model_name] = {
+                            'mean_metrics': mean_metrics,
+                            'all_y_true': all_y_true,
+                            'all_y_pred': all_y_pred,
+                            'confusion_matrix': confusion_matrix(all_y_true, all_y_pred),
+                            'n_samples': len(all_y_true),
+                            'selected_features': selected_features,
+                            'k_features': k_features
+                        }
+
+                if k_results:
+                    best_model_for_k = max(k_results.keys(), key=lambda x: k_results[x]['mean_metrics']['f1_score'])
+                    best_k_results[k_features] = {
+                        'best_model': best_model_for_k,
+                        'results': k_results,
+                        'best_f1': k_results[best_model_for_k]['mean_metrics']['f1_score']
                     }
 
-            if task_results:
-                best_model = max(task_results.keys(), key=lambda x: task_results[x]['mean_metrics']['f1_score'])
-                best_result = task_results[best_model]
+                    print(f"      Best model for k={k_features}: {best_model_for_k} "
+                          f"(F1: {k_results[best_model_for_k]['mean_metrics']['f1_score']:.3f})")
 
-                print(f"\n   🏆 Best Model: {best_model} (F1-Score: {best_result['mean_metrics']['f1_score']:.3f})")
-                print(f"   📊 Samples analyzed: {best_result['n_samples']}")
+            # Find overall best k_features
+            if best_k_results:
+                best_k = max(best_k_results.keys(), key=lambda x: best_k_results[x]['best_f1'])
+                best_overall = best_k_results[best_k]
 
-                cm = best_result['confusion_matrix']
-                print(f"   📊 Confusion Matrix:")
-                print(f"      {'Predicted':<12} Normal  Challenge")
-                print(f"      Normal        {cm[0, 0]:<6} {cm[0, 1]:<6}")
-                print(f"      Challenge     {cm[1, 0]:<6} {cm[1, 1]:<6}")
+                print(f"\n   🏆 Best k_features: {best_k} with {best_overall['best_model']} "
+                      f"(F1-Score: {best_overall['best_f1']:.3f})")
+
+                # Display results table for best k
+                print(f"\n   🔄 Results for k={best_k} features:")
+                print(f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
+                print(f"   {'-' * 70}")
+
+                for model_name, model_result in best_overall['results'].items():
+                    metrics = model_result['mean_metrics']
+                    print(f"   {model_name:<15} "
+                          f"{metrics['accuracy']:.3f} "
+                          f"{metrics['f1_score']:.3f} "
+                          f"{metrics['precision']:.3f} "
+                          f"{metrics['recall']:.3f} "
+                          f"{metrics['specificity']:.3f} "
+                          f"{metrics.get('roc_auc', 0):.3f}")
+
+                # Store final results
+                best_result = best_overall['results'][best_overall['best_model']]
 
                 f1_score_val = best_result['mean_metrics']['f1_score']
                 accuracy_val = best_result['mean_metrics']['accuracy']
@@ -322,27 +347,36 @@ class NonWindowedMLAnalyzer:
 
                 print(f"   💡 Interpretation: {interpretation}")
 
+                cm = best_result['confusion_matrix']
+                print(f"   📊 Confusion Matrix:")
+                print(f"   {'Predicted':<12} Normal Challenge")
+                print(f"   Normal {cm[0, 0]:<6} {cm[0, 1]:<6}")
+                print(f"   Challenge {cm[1, 0]:<6} {cm[1, 1]:<6}")
+
                 results[task] = {
-                    'best_model': best_model,
-                    'best_f1_score': f1_score_val,
-                    'best_accuracy': accuracy_val,
+                    'best_model': best_overall['best_model'],
+                    'best_k_features': best_k,
+                    'best_f1_score': best_overall['best_f1'],
+                    'best_accuracy': best_result['mean_metrics']['accuracy'],
                     'interpretation': interpretation,
-                    'selected_features': selected_features,
-                    'detailed_results': task_results,
-                    'confusion_matrix': cm,
-                    'n_samples': best_result['n_samples']
+                    'selected_features': best_result['selected_features'],
+                    'detailed_results': {best_overall['best_model']: best_result},
+                    'confusion_matrix': best_result['confusion_matrix'],
+                    'n_samples': best_result['n_samples'],
+                    'k_features_tested': k_features_list,
+                    'all_k_results': best_k_results
                 }
 
         print(f"\n" + "=" * 80)
         print("📋 NON-WINDOWED ANALYSIS SUMMARY")
         print("=" * 80)
-
         summary_table = []
         for task, result in results.items():
             best_metrics = result['detailed_results'][result['best_model']]['mean_metrics']
             summary_table.append({
                 'Task': task.replace('_', ' ').title(),
                 'Best Model': result['best_model'],
+                'k_features': result['best_k_features'],
                 'Samples': result['n_samples'],
                 'F1-Score': f"{best_metrics['f1_score']:.3f}",
                 'Accuracy': f"{best_metrics['accuracy']:.3f}",
@@ -405,11 +439,9 @@ class NonWindowedMLAnalyzer:
             bars = plt.bar(task_names, sample_counts, color=['lightblue', 'lightgreen', 'lightcoral'][:len(task_names)])
             plt.title('Sample Sizes (Non-Windowed)', fontsize=14, fontweight='bold')
             plt.ylabel('Number of Samples')
-
             for bar, count in zip(bars, sample_counts):
                 plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + max(sample_counts) * 0.01,
                          f'{count}', ha='center', va='bottom')
-
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
             plt.savefig('./outputs/ml_plots/non_windowed_sample_sizes.png', dpi=300, bbox_inches='tight')
@@ -420,7 +452,6 @@ class NonWindowedMLAnalyzer:
         for task, task_result in self.results.items():
             plt.figure(figsize=(6, 5))
             cm = task_result['confusion_matrix']
-
             sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                         xticklabels=['Normal', 'Challenge'],
                         yticklabels=['Normal', 'Challenge'],
@@ -437,12 +468,13 @@ class NonWindowedMLAnalyzer:
         # Plot 4: Performance radar chart
         plt.figure(figsize=(8, 8))
         ax = plt.subplot(111, projection='polar')
-        metrics_names = ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'Specificity']
 
+        metrics_names = ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'Specificity']
         angles = np.linspace(0, 2 * np.pi, len(metrics_names), endpoint=False).tolist()
         angles += angles[:1]
 
         colors = ['red', 'blue', 'green']
+
         for i, (task, task_result) in enumerate(self.results.items()):
             best_model = task_result['best_model']
             best_metrics = task_result['detailed_results'][best_model]['mean_metrics']
@@ -454,6 +486,7 @@ class NonWindowedMLAnalyzer:
                 best_metrics['f1_score'],
                 best_metrics['specificity']
             ]
+
             values += values[:1]
 
             ax.plot(angles, values, 'o-', linewidth=2,
@@ -527,13 +560,11 @@ class NonWindowedMLAnalyzer:
             plt.close()
             print("📊 Saved: non_windowed_feature_importance.png")
 
-
 class WindowedMLAnalyzer:
     def __init__(self, data_dict):
         self.data_dict = data_dict
         self.windowed_features_df = None
         self.results = {}
-
         self.window_configs = {
             'step_count': {
                 'window_size_seconds': 3.0,
@@ -555,17 +586,14 @@ class WindowedMLAnalyzer:
     def extract_windows(self, df, task_type):
         """Extract overlapping windows from continuous sensor data"""
         config = self.window_configs[task_type]
-
         window_size_samples = int(config['window_size_seconds'] * config['sampling_rate'])
         overlap_samples = int(window_size_samples * config['overlap'])
         step_size = window_size_samples - overlap_samples
 
         windows = []
-
         for start in range(0, len(df) - window_size_samples + 1, step_size):
             end = start + window_size_samples
             window = df.iloc[start:end].copy()
-
             if self.has_sufficient_movement(window, task_type):
                 windows.append(window)
 
@@ -685,7 +713,6 @@ class WindowedMLAnalyzer:
                 print(f"   Found {len(common_participants)} participants with both conditions")
 
                 total_windows = 0
-
                 for participant_id in common_participants:
                     # Process normal condition
                     normal_data = self.data_dict[normal_task][participant_id]['data']
@@ -693,7 +720,6 @@ class WindowedMLAnalyzer:
 
                     for i, window in enumerate(normal_windows):
                         window_features = self.extract_window_features(window, normal_task)
-
                         window_data = {
                             'participant_id': participant_id,
                             'task': normal_task,
@@ -710,7 +736,6 @@ class WindowedMLAnalyzer:
 
                     for i, window in enumerate(challenge_windows):
                         window_features = self.extract_window_features(window, normal_task)
-
                         window_data = {
                             'participant_id': participant_id,
                             'task': normal_task,
@@ -723,6 +748,7 @@ class WindowedMLAnalyzer:
 
                     participant_windows = len(normal_windows) + len(challenge_windows)
                     total_windows += participant_windows
+
                     print(
                         f"   P{participant_id}: {len(normal_windows)} normal + {len(challenge_windows)} challenge = {participant_windows} windows")
 
@@ -756,7 +782,7 @@ class WindowedMLAnalyzer:
         return metrics
 
     def run_windowed_ml_analysis(self):
-        """Run comprehensive ML analysis on windowed data"""
+        """Run comprehensive ML analysis on windowed data with logarithmic k_features"""
         if self.windowed_features_df is None:
             self.create_windowed_dataset()
 
@@ -786,103 +812,119 @@ class WindowedMLAnalyzer:
             print(f"   👥 Participants: {len(participant_ids.unique())}")
             print(f"   🏷️ Labels: {y.value_counts().to_dict()}")
 
-            # Feature selection
-            k_features = min(15, len(feature_cols))
-            selector = SelectKBest(score_func=f_classif, k=k_features)
-            X_selected = selector.fit_transform(X, y)
-            selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
+            # Generate logarithmic k_features values
+            k_features_list = generate_logarithmic_k_features(len(feature_cols))
+            print(f"   🔍 Testing k_features values: {k_features_list}")
 
-            print(f"   🔍 Selected top {k_features} features: {selected_features}")
-            for i, feat in enumerate(selected_features[:5]):
-                score = selector.scores_[selector.get_support()][i]
-                print(f"      {feat}: {score:.2f}")
+            best_k_results = {}
 
-            models = {
-                'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, max_depth=5),
-                'SVM': SVC(kernel='rbf', random_state=42, probability=True),
-                'K-NN': KNeighborsClassifier(n_neighbors=5),
-                'Naive Bayes': GaussianNB()
-            }
+            for k_features in k_features_list:
+                print(f"\n   🔬 Testing with k={k_features} features...")
 
-            print(f"   🔄 Leave-One-Subject-Out Cross-Validation:")
-            print(
-                f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
-            print(f"   {'-' * 70}")
+                # Feature selection
+                selector = SelectKBest(score_func=f_classif, k=k_features)
+                X_selected = selector.fit_transform(X, y)
+                selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
 
-            task_results = {}
-            for model_name, model in models.items():
-                pipeline = Pipeline([
-                    ('scaler', StandardScaler()),
-                    ('classifier', model)
-                ])
+                models = {
+                    'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, max_depth=5),
+                    'SVM': SVC(kernel='rbf', random_state=42, probability=True),
+                    'K-NN': KNeighborsClassifier(n_neighbors=5),
+                    'Naive Bayes': GaussianNB()
+                }
 
-                all_metrics = defaultdict(list)
-                unique_participants = participant_ids.unique()
+                k_results = {}
 
-                all_y_true = []
-                all_y_pred = []
-                all_y_pred_proba = []
+                for model_name, model in models.items():
+                    pipeline = Pipeline([
+                        ('scaler', StandardScaler()),
+                        ('classifier', model)
+                    ])
 
-                for test_participant in unique_participants:
-                    train_mask = participant_ids != test_participant
-                    test_mask = participant_ids == test_participant
+                    all_metrics = defaultdict(list)
+                    unique_participants = participant_ids.unique()
+                    all_y_true = []
+                    all_y_pred = []
+                    all_y_pred_proba = []
 
-                    X_train, X_test = X_selected[train_mask], X_selected[test_mask]
-                    y_train, y_test = y[train_mask], y[test_mask]
+                    for test_participant in unique_participants:
+                        train_mask = participant_ids != test_participant
+                        test_mask = participant_ids == test_participant
 
-                    if len(np.unique(y_train)) < 2 or len(y_test) == 0:
-                        continue
+                        X_train, X_test = X_selected[train_mask], X_selected[test_mask]
+                        y_train, y_test = y[train_mask], y[test_mask]
 
-                    pipeline.fit(X_train, y_train)
-                    y_pred = pipeline.predict(X_test)
+                        if len(np.unique(y_train)) < 2 or len(y_test) == 0:
+                            continue
 
-                    try:
-                        y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
-                    except:
-                        y_pred_proba = None
+                        pipeline.fit(X_train, y_train)
+                        y_pred = pipeline.predict(X_test)
 
-                    fold_metrics = self.calculate_comprehensive_metrics(y_test, y_pred, y_pred_proba)
+                        try:
+                            y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
+                        except:
+                            y_pred_proba = None
 
-                    for metric_name, value in fold_metrics.items():
-                        if not np.isnan(value):
-                            all_metrics[metric_name].append(value)
+                        fold_metrics = self.calculate_comprehensive_metrics(y_test, y_pred, y_pred_proba)
 
-                    all_y_true.extend(y_test)
-                    all_y_pred.extend(y_pred)
-                    if y_pred_proba is not None:
-                        all_y_pred_proba.extend(y_pred_proba)
+                        for metric_name, value in fold_metrics.items():
+                            if not np.isnan(value):
+                                all_metrics[metric_name].append(value)
 
-                if all_metrics:
-                    mean_metrics = {metric: np.mean(values) for metric, values in all_metrics.items()}
+                        all_y_true.extend(y_test)
+                        all_y_pred.extend(y_pred)
+                        if y_pred_proba is not None:
+                            all_y_pred_proba.extend(y_pred_proba)
 
-                    print(f"   {model_name:<15} "
-                          f"{mean_metrics['accuracy']:.3f}    "
-                          f"{mean_metrics['f1_score']:.3f}  "
-                          f"{mean_metrics['precision']:.3f}     "
-                          f"{mean_metrics['recall']:.3f}   "
-                          f"{mean_metrics['specificity']:.3f}       "
-                          f"{mean_metrics.get('roc_auc', 0):.3f}")
+                    if all_metrics:
+                        mean_metrics = {metric: np.mean(values) for metric, values in all_metrics.items()}
 
-                    task_results[model_name] = {
-                        'mean_metrics': mean_metrics,
-                        'all_y_true': all_y_true,
-                        'all_y_pred': all_y_pred,
-                        'confusion_matrix': confusion_matrix(all_y_true, all_y_pred),
-                        'n_windows': len(all_y_true)
+                        k_results[model_name] = {
+                            'mean_metrics': mean_metrics,
+                            'all_y_true': all_y_true,
+                            'all_y_pred': all_y_pred,
+                            'confusion_matrix': confusion_matrix(all_y_true, all_y_pred),
+                            'n_windows': len(all_y_true),
+                            'selected_features': selected_features,
+                            'k_features': k_features
+                        }
+
+                if k_results:
+                    best_model_for_k = max(k_results.keys(), key=lambda x: k_results[x]['mean_metrics']['f1_score'])
+                    best_k_results[k_features] = {
+                        'best_model': best_model_for_k,
+                        'results': k_results,
+                        'best_f1': k_results[best_model_for_k]['mean_metrics']['f1_score']
                     }
 
-            if task_results:
-                best_model = max(task_results.keys(), key=lambda x: task_results[x]['mean_metrics']['f1_score'])
-                best_result = task_results[best_model]
+                    print(f"      Best model for k={k_features}: {best_model_for_k} "
+                          f"(F1: {k_results[best_model_for_k]['mean_metrics']['f1_score']:.3f})")
 
-                print(f"\n   🏆 Best Model: {best_model} (F1-Score: {best_result['mean_metrics']['f1_score']:.3f})")
-                print(f"   📊 Windows analyzed: {best_result['n_windows']}")
+            # Find overall best k_features
+            if best_k_results:
+                best_k = max(best_k_results.keys(), key=lambda x: best_k_results[x]['best_f1'])
+                best_overall = best_k_results[best_k]
 
-                cm = best_result['confusion_matrix']
-                print(f"   📊 Confusion Matrix:")
-                print(f"      {'Predicted':<12} Normal  Challenge")
-                print(f"      Normal        {cm[0, 0]:<6} {cm[0, 1]:<6}")
-                print(f"      Challenge     {cm[1, 0]:<6} {cm[1, 1]:<6}")
+                print(f"\n   🏆 Best k_features: {best_k} with {best_overall['best_model']} "
+                      f"(F1-Score: {best_overall['best_f1']:.3f})")
+
+                # Display results table for best k
+                print(f"\n   🔄 Results for k={best_k} features:")
+                print(f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
+                print(f"   {'-' * 70}")
+
+                for model_name, model_result in best_overall['results'].items():
+                    metrics = model_result['mean_metrics']
+                    print(f"   {model_name:<15} "
+                          f"{metrics['accuracy']:.3f} "
+                          f"{metrics['f1_score']:.3f} "
+                          f"{metrics['precision']:.3f} "
+                          f"{metrics['recall']:.3f} "
+                          f"{metrics['specificity']:.3f} "
+                          f"{metrics.get('roc_auc', 0):.3f}")
+
+                # Store final results
+                best_result = best_overall['results'][best_overall['best_model']]
 
                 f1_score_val = best_result['mean_metrics']['f1_score']
                 accuracy_val = best_result['mean_metrics']['accuracy']
@@ -898,27 +940,36 @@ class WindowedMLAnalyzer:
 
                 print(f"   💡 Interpretation: {interpretation}")
 
+                cm = best_result['confusion_matrix']
+                print(f"   📊 Confusion Matrix:")
+                print(f"   {'Predicted':<12} Normal Challenge")
+                print(f"   Normal {cm[0, 0]:<6} {cm[0, 1]:<6}")
+                print(f"   Challenge {cm[1, 0]:<6} {cm[1, 1]:<6}")
+
                 results[task] = {
-                    'best_model': best_model,
-                    'best_f1_score': f1_score_val,
-                    'best_accuracy': accuracy_val,
+                    'best_model': best_overall['best_model'],
+                    'best_k_features': best_k,
+                    'best_f1_score': best_overall['best_f1'],
+                    'best_accuracy': best_result['mean_metrics']['accuracy'],
                     'interpretation': interpretation,
-                    'selected_features': selected_features,
-                    'detailed_results': task_results,
-                    'confusion_matrix': cm,
-                    'n_windows': best_result['n_windows']
+                    'selected_features': best_result['selected_features'],
+                    'detailed_results': {best_overall['best_model']: best_result},
+                    'confusion_matrix': best_result['confusion_matrix'],
+                    'n_windows': best_result['n_windows'],
+                    'k_features_tested': k_features_list,
+                    'all_k_results': best_k_results
                 }
 
         print(f"\n" + "=" * 80)
         print("📋 WINDOWED ANALYSIS SUMMARY")
         print("=" * 80)
-
         summary_table = []
         for task, result in results.items():
             best_metrics = result['detailed_results'][result['best_model']]['mean_metrics']
             summary_table.append({
                 'Task': task.replace('_', ' ').title(),
                 'Best Model': result['best_model'],
+                'k_features': result['best_k_features'],
                 'Windows': result['n_windows'],
                 'F1-Score': f"{best_metrics['f1_score']:.3f}",
                 'Accuracy': f"{best_metrics['accuracy']:.3f}",
@@ -1008,7 +1059,6 @@ class WindowedMLAnalyzer:
         for task, task_result in self.results.items():
             plt.figure(figsize=(6, 5))
             cm = task_result['confusion_matrix']
-
             sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                         xticklabels=['Normal', 'Challenge'],
                         yticklabels=['Normal', 'Challenge'],
@@ -1025,12 +1075,13 @@ class WindowedMLAnalyzer:
         # Plot 4: Performance radar chart
         plt.figure(figsize=(8, 8))
         ax = plt.subplot(111, projection='polar')
-        metrics_names = ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'Specificity']
 
+        metrics_names = ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'Specificity']
         angles = np.linspace(0, 2 * np.pi, len(metrics_names), endpoint=False).tolist()
         angles += angles[:1]
 
         colors = ['red', 'blue', 'green']
+
         for i, (task, task_result) in enumerate(self.results.items()):
             best_model = task_result['best_model']
             best_metrics = task_result['detailed_results'][best_model]['mean_metrics']
@@ -1042,6 +1093,7 @@ class WindowedMLAnalyzer:
                 best_metrics['f1_score'],
                 best_metrics['specificity']
             ]
+
             values += values[:1]
 
             ax.plot(angles, values, 'o-', linewidth=2,
@@ -1110,7 +1162,6 @@ class WindowedMLAnalyzer:
         for task, task_result in self.results.items():
             max_performance = task_result['best_f1_score']
             performances = []
-
             for size in sample_sizes:
                 perf = max_performance * (1 - np.exp(-size / 200)) + np.random.normal(0, 0.02)
                 performances.append(max(0, min(1, perf)))
@@ -1127,9 +1178,6 @@ class WindowedMLAnalyzer:
         plt.savefig('./outputs/ml_plots/windowed_learning_curves.png', dpi=300, bbox_inches='tight')
         plt.close()
         print("📊 Saved: windowed_learning_curves.png")
-
-        # Plot
-
 
 def plot_top3_feature_importance(results_dict, analyser_type):
     """
