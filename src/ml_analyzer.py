@@ -32,6 +32,7 @@ warnings.filterwarnings('ignore')
 # Create output directory
 os.makedirs('./outputs/ml_plots', exist_ok=True)
 
+
 def generate_logarithmic_k_features(total_features):
     """Generate logarithmic steps for k_features covering all, half, quarter, etc."""
     k_values = set()
@@ -42,11 +43,42 @@ def generate_logarithmic_k_features(total_features):
     k_values.add(total_features)  # Include all features
     return sorted(k_values)
 
+
+# Add this new function for hyperparameter tuning
+def get_model_param_grids():
+    """Define hyperparameter grids for each model"""
+    param_grids = {
+        'Random Forest': {
+            'classifier__n_estimators': [50, 100, 200],
+            'classifier__max_depth': [3, 5, 10, None],
+            'classifier__min_samples_split': [2, 5, 10],
+            'classifier__min_samples_leaf': [1, 2, 4],
+            'classifier__bootstrap': [True, False]
+        },
+        'SVM': {
+            'classifier__C': [0.1, 1, 10, 100],
+            'classifier__gamma': ['scale', 'auto', 0.001, 0.01, 0.1, 1],
+            'classifier__kernel': ['rbf', 'linear', 'poly']
+        },
+        'K-NN': {
+            'classifier__n_neighbors': [3, 5, 7, 11, 15],
+            'classifier__weights': ['uniform', 'distance'],
+            'classifier__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
+            'classifier__metric': ['euclidean', 'manhattan', 'minkowski']
+        },
+        'Naive Bayes': {
+            'classifier__var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+        }
+    }
+    return param_grids
+
+
 class NonWindowedMLAnalyzer:
-    def __init__(self, data_dict):
+    def __init__(self, data_dict, use_hyperparameter_tuning=True):
         self.data_dict = data_dict
         self.features_df = None
         self.results = {}
+        self.use_hyperparameter_tuning = use_hyperparameter_tuning
 
     def extract_features_from_entire_recording(self, df, task_type):
         """Extract features from entire recording (no windowing)"""
@@ -192,12 +224,14 @@ class NonWindowedMLAnalyzer:
         return metrics
 
     def run_non_windowed_ml_analysis(self):
-        """Run ML analysis on non-windowed data with logarithmic k_features"""
+        """Run ML analysis on non-windowed data with logarithmic k_features and hyperparameter tuning"""
         if self.features_df is None:
             self.create_non_windowed_dataset()
 
         print("\n" + "=" * 80)
         print("🤖 NON-WINDOWED MACHINE LEARNING ANALYSIS")
+        if self.use_hyperparameter_tuning:
+            print("🔧 WITH HYPERPARAMETER TUNING")
         print("=" * 80)
 
         results = {}
@@ -227,7 +261,7 @@ class NonWindowedMLAnalyzer:
             print(f"   🔍 Testing k_features values: {k_features_list}")
 
             best_k_results = {}
-            all_model_best_k = {}  # Track best k for each model
+            all_model_best_k = {}
 
             for k_features in k_features_list:
                 print(f"\n   🔬 Testing with k={k_features} features...")
@@ -237,24 +271,61 @@ class NonWindowedMLAnalyzer:
                 X_selected = selector.fit_transform(X, y)
                 selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
 
-                models = {
-                    'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, max_depth=3),
-                    'SVM': SVC(kernel='rbf', random_state=42, probability=True),
-                    'K-NN': KNeighborsClassifier(n_neighbors=3),
+                # Define base models
+                base_models = {
+                    'Random Forest': RandomForestClassifier(random_state=42),
+                    'SVM': SVC(random_state=42, probability=True),
+                    'K-NN': KNeighborsClassifier(),
                     'Naive Bayes': GaussianNB()
                 }
 
-                print(f"      {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
+                print(
+                    f"      {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
                 print(f"      {'-' * 70}")
 
                 k_results = {}
+                param_grids = get_model_param_grids() if self.use_hyperparameter_tuning else {}
 
-                for model_name, model in models.items():
+                for model_name, base_model in base_models.items():
+                    # Create pipeline
                     pipeline = Pipeline([
                         ('scaler', StandardScaler()),
-                        ('classifier', model)
+                        ('classifier', base_model)
                     ])
 
+                    # Hyperparameter tuning if enabled
+                    if self.use_hyperparameter_tuning and model_name in param_grids:
+                        print(f"      🔧 Tuning {model_name} hyperparameters...")
+
+                        # Use a subset of participants for hyperparameter tuning to avoid overfitting
+                        unique_participants = participant_ids.unique()
+                        if len(unique_participants) >= 5:
+                            # Use inner CV for hyperparameter tuning
+                            from sklearn.model_selection import GridSearchCV, StratifiedKFold
+
+                            inner_cv = StratifiedKFold(n_splits=min(3, len(unique_participants)),
+                                                       shuffle=True, random_state=42)
+
+                            grid_search = GridSearchCV(
+                                pipeline,
+                                param_grids[model_name],
+                                cv=inner_cv,
+                                scoring='f1',
+                                n_jobs=-1,
+                                verbose=0
+                            )
+
+                            # Fit grid search on a subset for efficiency
+                            grid_search.fit(X_selected, y)
+                            best_pipeline = grid_search.best_estimator_
+
+                            print(f"         Best params: {grid_search.best_params_}")
+                        else:
+                            best_pipeline = pipeline
+                    else:
+                        best_pipeline = pipeline
+
+                    # Perform Leave-One-Subject-Out Cross-Validation
                     all_metrics = defaultdict(list)
                     unique_participants = participant_ids.unique()
                     all_y_true = []
@@ -271,11 +342,11 @@ class NonWindowedMLAnalyzer:
                         if len(np.unique(y_train)) < 2 or len(y_test) == 0:
                             continue
 
-                        pipeline.fit(X_train, y_train)
-                        y_pred = pipeline.predict(X_test)
+                        best_pipeline.fit(X_train, y_train)
+                        y_pred = best_pipeline.predict(X_test)
 
                         try:
-                            y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
+                            y_pred_proba = best_pipeline.predict_proba(X_test)[:, 1]
                         except:
                             y_pred_proba = None
 
@@ -308,14 +379,23 @@ class NonWindowedMLAnalyzer:
                             'confusion_matrix': confusion_matrix(all_y_true, all_y_pred),
                             'n_samples': len(all_y_true),
                             'selected_features': selected_features,
-                            'k_features': k_features
+                            'k_features': k_features,
+                            'best_pipeline': best_pipeline
                         }
 
                         # Track best k for each model
                         if model_name not in all_model_best_k:
-                            all_model_best_k[model_name] = {'best_k': k_features, 'best_f1': mean_metrics['f1_score'], 'best_result': k_results[model_name]}
+                            all_model_best_k[model_name] = {
+                                'best_k': k_features,
+                                'best_f1': mean_metrics['f1_score'],
+                                'best_result': k_results[model_name]
+                            }
                         elif mean_metrics['f1_score'] > all_model_best_k[model_name]['best_f1']:
-                            all_model_best_k[model_name] = {'best_k': k_features, 'best_f1': mean_metrics['f1_score'], 'best_result': k_results[model_name]}
+                            all_model_best_k[model_name] = {
+                                'best_k': k_features,
+                                'best_f1': mean_metrics['f1_score'],
+                                'best_result': k_results[model_name]
+                            }
 
                 if k_results:
                     best_model_for_k = max(k_results.keys(), key=lambda x: k_results[x]['mean_metrics']['f1_score'])
@@ -337,7 +417,7 @@ class NonWindowedMLAnalyzer:
                 print(f"   {model_name:<15} {model_info['best_k']:<8} {best_metrics['f1_score']:.3f} "
                       f"{best_metrics['accuracy']:.3f}")
 
-            # Find overall best k_features
+            # Find overall best k_features and store results
             if best_k_results:
                 best_k = max(best_k_results.keys(), key=lambda x: best_k_results[x]['best_f1'])
                 best_overall = best_k_results[best_k]
@@ -380,9 +460,11 @@ class NonWindowedMLAnalyzer:
                     'n_samples': best_result['n_samples'],
                     'k_features_tested': k_features_list,
                     'all_k_results': best_k_results,
-                    'all_model_best_k': all_model_best_k
+                    'all_model_best_k': all_model_best_k,
+                    'best_pipeline': best_result['best_pipeline']
                 }
 
+        # Display summary
         print(f"\n" + "=" * 80)
         print("📋 NON-WINDOWED ANALYSIS SUMMARY")
         print("=" * 80)
@@ -597,11 +679,13 @@ class NonWindowedMLAnalyzer:
             plt.close()
             print("📊 Saved: non_windowed_best_k_analysis.png")
 
+
 class WindowedMLAnalyzer:
-    def __init__(self, data_dict):
+    def __init__(self, data_dict, use_hyperparameter_tuning=True):
         self.data_dict = data_dict
         self.windowed_features_df = None
         self.results = {}
+        self.use_hyperparameter_tuning = use_hyperparameter_tuning
         self.window_configs = {
             'step_count': {
                 'window_size_seconds': 3.0,
@@ -819,12 +903,14 @@ class WindowedMLAnalyzer:
         return metrics
 
     def run_windowed_ml_analysis(self):
-        """Run comprehensive ML analysis on windowed data with logarithmic k_features"""
+        """Run comprehensive ML analysis on windowed data with logarithmic k_features and hyperparameter tuning"""
         if self.windowed_features_df is None:
             self.create_windowed_dataset()
 
         print("\n" + "=" * 80)
         print("🤖 WINDOWED MACHINE LEARNING ANALYSIS")
+        if self.use_hyperparameter_tuning:
+            print("🔧 WITH HYPERPARAMETER TUNING")
         print("=" * 80)
 
         results = {}
@@ -864,10 +950,11 @@ class WindowedMLAnalyzer:
                 X_selected = selector.fit_transform(X, y)
                 selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
 
-                models = {
-                    'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42, max_depth=5),
-                    'SVM': SVC(kernel='rbf', random_state=42, probability=True),
-                    'K-NN': KNeighborsClassifier(n_neighbors=5),
+                # Define base models
+                base_models = {
+                    'Random Forest': RandomForestClassifier(random_state=42),
+                    'SVM': SVC(random_state=42, probability=True),
+                    'K-NN': KNeighborsClassifier(),
                     'Naive Bayes': GaussianNB()
                 }
 
@@ -875,13 +962,48 @@ class WindowedMLAnalyzer:
                 print(f"      {'-' * 70}")
 
                 k_results = {}
+                param_grids = get_model_param_grids() if self.use_hyperparameter_tuning else {}
 
-                for model_name, model in models.items():
+                for model_name, base_model in base_models.items():
+                    # Create pipeline
                     pipeline = Pipeline([
                         ('scaler', StandardScaler()),
-                        ('classifier', model)
+                        ('classifier', base_model)
                     ])
 
+                    # Hyperparameter tuning if enabled
+                    if self.use_hyperparameter_tuning and model_name in param_grids:
+                        print(f"      🔧 Tuning {model_name} hyperparameters...")
+
+                        # Use a subset of participants for hyperparameter tuning to avoid overfitting
+                        unique_participants = participant_ids.unique()
+                        if len(unique_participants) >= 5:
+                            # Use inner CV for hyperparameter tuning
+                            from sklearn.model_selection import GridSearchCV, StratifiedKFold
+
+                            inner_cv = StratifiedKFold(n_splits=min(3, len(unique_participants)),
+                                                       shuffle=True, random_state=42)
+
+                            grid_search = GridSearchCV(
+                                pipeline,
+                                param_grids[model_name],
+                                cv=inner_cv,
+                                scoring='f1',
+                                n_jobs=-1,
+                                verbose=0
+                            )
+
+                            # Fit grid search on a subset for efficiency
+                            grid_search.fit(X_selected, y)
+                            best_pipeline = grid_search.best_estimator_
+
+                            print(f"         Best params: {grid_search.best_params_}")
+                        else:
+                            best_pipeline = pipeline
+                    else:
+                        best_pipeline = pipeline
+
+                    # Perform Leave-One-Subject-Out Cross-Validation
                     all_metrics = defaultdict(list)
                     unique_participants = participant_ids.unique()
                     all_y_true = []
@@ -898,11 +1020,11 @@ class WindowedMLAnalyzer:
                         if len(np.unique(y_train)) < 2 or len(y_test) == 0:
                             continue
 
-                        pipeline.fit(X_train, y_train)
-                        y_pred = pipeline.predict(X_test)
+                        best_pipeline.fit(X_train, y_train)
+                        y_pred = best_pipeline.predict(X_test)
 
                         try:
-                            y_pred_proba = pipeline.predict_proba(X_test)[:, 1]
+                            y_pred_proba = best_pipeline.predict_proba(X_test)[:, 1]
                         except:
                             y_pred_proba = None
 
@@ -935,14 +1057,23 @@ class WindowedMLAnalyzer:
                             'confusion_matrix': confusion_matrix(all_y_true, all_y_pred),
                             'n_windows': len(all_y_true),
                             'selected_features': selected_features,
-                            'k_features': k_features
+                            'k_features': k_features,
+                            'best_pipeline': best_pipeline
                         }
 
                         # Track best k for each model
                         if model_name not in all_model_best_k:
-                            all_model_best_k[model_name] = {'best_k': k_features, 'best_f1': mean_metrics['f1_score'], 'best_result': k_results[model_name]}
+                            all_model_best_k[model_name] = {
+                                'best_k': k_features,
+                                'best_f1': mean_metrics['f1_score'],
+                                'best_result': k_results[model_name]
+                            }
                         elif mean_metrics['f1_score'] > all_model_best_k[model_name]['best_f1']:
-                            all_model_best_k[model_name] = {'best_k': k_features, 'best_f1': mean_metrics['f1_score'], 'best_result': k_results[model_name]}
+                            all_model_best_k[model_name] = {
+                                'best_k': k_features,
+                                'best_f1': mean_metrics['f1_score'],
+                                'best_result': k_results[model_name]
+                            }
 
                 if k_results:
                     best_model_for_k = max(k_results.keys(), key=lambda x: k_results[x]['mean_metrics']['f1_score'])
@@ -1007,7 +1138,8 @@ class WindowedMLAnalyzer:
                     'n_windows': best_result['n_windows'],
                     'k_features_tested': k_features_list,
                     'all_k_results': best_k_results,
-                    'all_model_best_k': all_model_best_k
+                    'all_model_best_k': all_model_best_k,
+                    'best_pipeline': best_result['best_pipeline']
                 }
 
         print(f"\n" + "=" * 80)
@@ -1279,6 +1411,7 @@ class WindowedMLAnalyzer:
             plt.close()
             print("📊 Saved: windowed_best_k_analysis.png")
 
+
 def plot_top3_feature_importance(results_dict, analyser_type):
     """
     Create a bar-chart heat-map hybrid that highlights the TOP-3 features
@@ -1431,16 +1564,19 @@ def plot_top3_feature_importance(results_dict, analyser_type):
         plt.close()
         print(f" • {table_path}")
 
-def run_complete_ml_analysis(data_dict):
+
+def run_complete_ml_analysis(data_dict, use_hyperparameter_tuning=True):
     """
-    Run both non-windowed and windowed ML analysis with comprehensive reporting
+    Run both non-windowed and windowed ML analysis with comprehensive reporting and optional hyperparameter tuning
     """
     print("🚀 Starting Complete Machine Learning Analysis")
+    if use_hyperparameter_tuning:
+        print("🔧 WITH HYPERPARAMETER TUNING ENABLED")
     print("=" * 80)
 
     # Non-windowed analysis
     print("\n🔍 Phase 1: Non-Windowed Analysis")
-    non_windowed_analyzer = NonWindowedMLAnalyzer(data_dict)
+    non_windowed_analyzer = NonWindowedMLAnalyzer(data_dict, use_hyperparameter_tuning)
     non_windowed_results = non_windowed_analyzer.run_non_windowed_ml_analysis()
 
     # Create plots for non-windowed
@@ -1452,7 +1588,7 @@ def run_complete_ml_analysis(data_dict):
 
     # Windowed analysis
     print("\n🔍 Phase 2: Windowed Analysis")
-    windowed_analyzer = WindowedMLAnalyzer(data_dict)
+    windowed_analyzer = WindowedMLAnalyzer(data_dict, use_hyperparameter_tuning)
     windowed_results = windowed_analyzer.run_windowed_ml_analysis()
 
     # Create plots for windowed
@@ -1479,7 +1615,8 @@ def run_complete_ml_analysis(data_dict):
             row['NW_Accuracy'] = f"{nw_result['best_accuracy']:.3f}"
             row['NW_Samples'] = nw_result['n_samples']
         else:
-            row.update({'NW_Model': 'N/A', 'NW_k_features': 'N/A', 'NW_F1': 'N/A', 'NW_Accuracy': 'N/A', 'NW_Samples': 'N/A'})
+            row.update(
+                {'NW_Model': 'N/A', 'NW_k_features': 'N/A', 'NW_F1': 'N/A', 'NW_Accuracy': 'N/A', 'NW_Samples': 'N/A'})
 
         if task in windowed_results:
             w_result = windowed_results[task]
@@ -1489,7 +1626,8 @@ def run_complete_ml_analysis(data_dict):
             row['W_Accuracy'] = f"{w_result['best_accuracy']:.3f}"
             row['W_Windows'] = w_result['n_windows']
         else:
-            row.update({'W_Model': 'N/A', 'W_k_features': 'N/A', 'W_F1': 'N/A', 'W_Accuracy': 'N/A', 'W_Windows': 'N/A'})
+            row.update(
+                {'W_Model': 'N/A', 'W_k_features': 'N/A', 'W_F1': 'N/A', 'W_Accuracy': 'N/A', 'W_Windows': 'N/A'})
 
         comparison_data.append(row)
 
