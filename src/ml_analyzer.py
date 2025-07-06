@@ -29,7 +29,9 @@ from collections import defaultdict
 import os
 from datetime import datetime
 import warnings
+
 warnings.filterwarnings('ignore')
+
 
 def create_unique_run_dir(base_dir='./outputs/ml_plots'):
     """Create a unique directory for each run based on timestamp"""
@@ -38,6 +40,7 @@ def create_unique_run_dir(base_dir='./outputs/ml_plots'):
     run_dir = os.path.join(base_dir, f'run_{timestamp}')
     os.makedirs(run_dir, exist_ok=True)
     return run_dir
+
 
 def generate_logarithmic_k_features(total_features):
     """Generate logarithmic steps for k_features covering all, half, quarter, etc."""
@@ -95,6 +98,7 @@ def get_model_param_grids():
 
     return param_grids
 
+
 class AdvancedVisualizationMixin:
     def __init__(self):
         self.run_dir = None
@@ -136,8 +140,9 @@ class AdvancedVisualizationMixin:
                 plt.legend()
                 plt.grid(True, alpha=0.3)
                 plt.tight_layout()
-                plt.savefig(os.path.join(self.run_dir, f'roc_curve_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
-                            dpi=300, bbox_inches='tight')
+                plt.savefig(
+                    os.path.join(self.run_dir, f'roc_curve_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
+                    dpi=300, bbox_inches='tight')
                 plt.close()
                 print(f"📊 Saved: roc_curve_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
 
@@ -152,8 +157,9 @@ class AdvancedVisualizationMixin:
                 plt.legend()
                 plt.grid(True, alpha=0.3)
                 plt.tight_layout()
-                plt.savefig(os.path.join(self.run_dir, f'pr_curve_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
-                            dpi=300, bbox_inches='tight')
+                plt.savefig(
+                    os.path.join(self.run_dir, f'pr_curve_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
+                    dpi=300, bbox_inches='tight')
                 plt.close()
                 print(f"📊 Saved: pr_curve_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
 
@@ -166,7 +172,8 @@ class AdvancedVisualizationMixin:
                 sns.heatmap(df_report, annot=True, cmap='Blues', fmt='.3f')
                 plt.title(f'Classification Report - {task.replace("_", " ").title()}\nBest Model: {best_model}')
                 plt.tight_layout()
-                plt.savefig(os.path.join(self.run_dir, f'classification_report_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
+                plt.savefig(os.path.join(self.run_dir,
+                                         f'classification_report_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
                             dpi=300, bbox_inches='tight')
                 plt.close()
                 print(f"📊 Saved: classification_report_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
@@ -181,11 +188,13 @@ class AdvancedVisualizationMixin:
                 plt.hist(challenge_probs, bins=20, alpha=0.7, label='Challenge (True)', color='red')
                 plt.xlabel('Predicted Probability of Challenge')
                 plt.ylabel('Frequency')
-                plt.title(f'Prediction Probability Distribution - {task.replace("_", " ").title()}\nBest Model: {best_model}')
+                plt.title(
+                    f'Prediction Probability Distribution - {task.replace("_", " ").title()}\nBest Model: {best_model}')
                 plt.legend()
                 plt.grid(True, alpha=0.3)
                 plt.tight_layout()
-                plt.savefig(os.path.join(self.run_dir, f'prob_distribution_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
+                plt.savefig(os.path.join(self.run_dir,
+                                         f'prob_distribution_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
                             dpi=300, bbox_inches='tight')
                 plt.close()
                 print(f"📊 Saved: prob_distribution_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
@@ -204,7 +213,8 @@ class AdvancedVisualizationMixin:
                     plt.ylabel('Importance')
                     plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=45, ha='right')
                     plt.tight_layout()
-                    plt.savefig(os.path.join(self.run_dir, f'feature_importance_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
+                    plt.savefig(os.path.join(self.run_dir,
+                                             f'feature_importance_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png'),
                                 dpi=300, bbox_inches='tight')
                     plt.close()
                     print(f"📊 Saved: feature_importance_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
@@ -219,6 +229,7 @@ class AdvancedVisualizationMixin:
 
     def _get_analyzer_type(self):
         raise NotImplementedError("Subclass must implement _get_analyzer_type")
+
 
 class NonWindowedMLAnalyzer(AdvancedVisualizationMixin):
     def __init__(self, data_dict, use_hyperparameter_tuning=True):
@@ -346,10 +357,12 @@ class NonWindowedMLAnalyzer(AdvancedVisualizationMixin):
                     challenge_features['label'] = 1
                     all_features.append(challenge_features)
 
-                    print(f"   P{participant_id}: Normal({normal_data.shape[0]} samples) + Challenge({challenge_data.shape[0]} samples)")
+                    print(
+                        f"   P{participant_id}: Normal({normal_data.shape[0]} samples) + Challenge({challenge_data.shape[0]} samples)")
 
         self.features_df = pd.DataFrame(all_features)
-        print(f"\n✅ Created non-windowed dataset: {self.features_df.shape[0]} samples, {self.features_df.shape[1]} features")
+        print(
+            f"\n✅ Created non-windowed dataset: {self.features_df.shape[0]} samples, {self.features_df.shape[1]} features")
         return self.features_df
 
     def calculate_comprehensive_metrics(self, y_true, y_pred, y_pred_proba=None):
@@ -428,7 +441,8 @@ class NonWindowedMLAnalyzer(AdvancedVisualizationMixin):
                     'Naive Bayes': GaussianNB()
                 }
 
-                print(f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
+                print(
+                    f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
                 print(f"   {'-' * 70}")
 
                 k_results = {}
@@ -698,29 +712,33 @@ class NonWindowedMLAnalyzer(AdvancedVisualizationMixin):
             plt.close()
             print("📊 Saved: non_windowed_sample_sizes.png")
 
-        # Plot 3: Confusion matrices for each task (with model and k info)
+        # Plot 3: Confusion matrices for best model of each type per task
         for task, task_result in self.results.items():
-            plt.figure(figsize=(6, 5))
-            cm = task_result['confusion_matrix']
-            best_model = task_result['best_model']
-            best_k = task_result['best_k_features']
+            model_types = ['Random Forest', 'SVM', 'K-NN', 'Naive Bayes']
+            for model_type in model_types:
+                if model_type in task_result['all_model_best_k']:
+                    best_result = task_result['all_model_best_k'][model_type]['best_result']
+                    best_k = task_result['all_model_best_k'][model_type]['best_k']
+                    best_f1 = task_result['all_model_best_k'][model_type]['best_f1']
+                    cm = best_result['confusion_matrix']
 
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                        xticklabels=['Normal', 'Challenge'],
-                        yticklabels=['Normal', 'Challenge'],
-                        cbar_kws={'label': 'Count'})
+                    plt.figure(figsize=(6, 5))
+                    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                                xticklabels=['Normal', 'Challenge'],
+                                yticklabels=['Normal', 'Challenge'],
+                                cbar_kws={'label': 'Count'})
 
-            plt.title(f'Confusion Matrix - {task.replace("_", " ").title()}\n'
-                      f'Model: {best_model}, k={best_k} (Non-Windowed)',
-                      fontsize=12, fontweight='bold')
-            plt.ylabel('True Label')
-            plt.xlabel('Predicted Label')
-            plt.tight_layout()
+                    plt.title(f'Confusion Matrix - {task.replace("_", " ").title()}\n'
+                              f'Model: {model_type}, k={best_k}, F1={best_f1:.3f} (Non-Windowed)',
+                              fontsize=12, fontweight='bold')
+                    plt.ylabel('True Label')
+                    plt.xlabel('Predicted Label')
+                    plt.tight_layout()
 
-            filename = f'non_windowed_confusion_matrix_{task}_{best_model.replace(" ", "_")}_k{best_k}.png'
-            plt.savefig(os.path.join(self.run_dir, filename), dpi=300, bbox_inches='tight')
-            plt.close()
-            print(f"📊 Saved: {filename}")
+                    filename = f'non_windowed_confusion_matrix_{task}_{model_type.replace(" ", "_")}_k{best_k}.png'
+                    plt.savefig(os.path.join(self.run_dir, filename), dpi=300, bbox_inches='tight')
+                    plt.close()
+                    print(f"📊 Saved: {filename}")
 
         # Plot 4: Performance radar chart
         plt.figure(figsize=(8, 8))
@@ -829,6 +847,7 @@ class NonWindowedMLAnalyzer(AdvancedVisualizationMixin):
 
         # Plot 9: Advanced classification plots
         self.create_advanced_classification_plots()
+
 
 class WindowedMLAnalyzer(AdvancedVisualizationMixin):
     def __init__(self, data_dict, use_hyperparameter_tuning=True):
@@ -1026,12 +1045,14 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
 
                     participant_windows = len(normal_windows) + len(challenge_windows)
                     total_windows += participant_windows
-                    print(f"   P{participant_id}: {len(normal_windows)} normal + {len(challenge_windows)} challenge = {participant_windows} windows")
+                    print(
+                        f"   P{participant_id}: {len(normal_windows)} normal + {len(challenge_windows)} challenge = {participant_windows} windows")
 
                 print(f"   Total windows for {normal_task}: {total_windows}")
 
         self.windowed_features_df = pd.DataFrame(all_windowed_data)
-        print(f"\n✅ Created windowed dataset: {self.windowed_features_df.shape[0]} windows, {self.windowed_features_df.shape[1]} features")
+        print(
+            f"\n✅ Created windowed dataset: {self.windowed_features_df.shape[0]} windows, {self.windowed_features_df.shape[1]} features")
         return self.windowed_features_df
 
     def calculate_comprehensive_metrics(self, y_true, y_pred, y_pred_proba=None):
@@ -1110,7 +1131,8 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
                     'Naive Bayes': GaussianNB()
                 }
 
-                print(f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
+                print(
+                    f"   {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
                 print(f"   {'-' * 70}")
 
                 k_results = {}
@@ -1155,7 +1177,6 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
                     unique_participants = participant_ids.unique()
                     all_y_true = []
                     all_y_pred = []
-
 
                     all_y_pred_proba = []
 
@@ -1372,8 +1393,8 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
             x = np.arange(len(task_names))
             width = 0.35
 
-            plt.bar(x - width/2, traditional_counts, width, label='Traditional', alpha=0.7, color='lightcoral')
-            plt.bar(x + width/2, window_counts, width, label='Windowed', alpha=0.7, color='lightblue')
+            plt.bar(x - width / 2, traditional_counts, width, label='Traditional', alpha=0.7, color='lightcoral')
+            plt.bar(x + width / 2, window_counts, width, label='Windowed', alpha=0.7, color='lightblue')
 
             plt.xlabel('Tasks')
             plt.ylabel('Number of Samples/Windows')
@@ -1384,8 +1405,8 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
 
             # Add value labels on bars
             for i, (trad, wind) in enumerate(zip(traditional_counts, window_counts)):
-                plt.text(i - width/2, trad + 1, f'{trad}', ha='center', va='bottom', fontsize=8)
-                plt.text(i + width/2, wind + 1, f'{wind}', ha='center', va='bottom', fontsize=8)
+                plt.text(i - width / 2, trad + 1, f'{trad}', ha='center', va='bottom', fontsize=8)
+                plt.text(i + width / 2, wind + 1, f'{wind}', ha='center', va='bottom', fontsize=8)
 
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
@@ -1393,29 +1414,33 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
             plt.close()
             print("📊 Saved: windowed_sample_size_comparison.png")
 
-        # Plot 3: Confusion matrices for each task (with model and k info)
+        # Plot 3: Confusion matrices for best model of each type per task
         for task, task_result in self.results.items():
-            plt.figure(figsize=(6, 5))
-            cm = task_result['confusion_matrix']
-            best_model = task_result['best_model']
-            best_k = task_result['best_k_features']
+            model_types = ['Random Forest', 'SVM', 'K-NN', 'Naive Bayes']
+            for model_type in model_types:
+                if model_type in task_result['all_model_best_k']:
+                    best_result = task_result['all_model_best_k'][model_type]['best_result']
+                    best_k = task_result['all_model_best_k'][model_type]['best_k']
+                    best_f1 = task_result['all_model_best_k'][model_type]['best_f1']
+                    cm = best_result['confusion_matrix']
 
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                        xticklabels=['Normal', 'Challenge'],
-                        yticklabels=['Normal', 'Challenge'],
-                        cbar_kws={'label': 'Count'})
+                    plt.figure(figsize=(6, 5))
+                    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                                xticklabels=['Normal', 'Challenge'],
+                                yticklabels=['Normal', 'Challenge'],
+                                cbar_kws={'label': 'Count'})
 
-            plt.title(f'Confusion Matrix - {task.replace("_", " ").title()}\n'
-                      f'Model: {best_model}, k={best_k} (Windowed)',
-                      fontsize=12, fontweight='bold')
-            plt.ylabel('True Label')
-            plt.xlabel('Predicted Label')
-            plt.tight_layout()
+                    plt.title(f'Confusion Matrix - {task.replace("_", " ").title()}\n'
+                              f'Model: {model_type}, k={best_k}, F1={best_f1:.3f} (Windowed)',
+                              fontsize=12, fontweight='bold')
+                    plt.ylabel('True Label')
+                    plt.xlabel('Predicted Label')
+                    plt.tight_layout()
 
-            filename = f'windowed_confusion_matrix_{task}_{best_model.replace(" ", "_")}_k{best_k}.png'
-            plt.savefig(os.path.join(self.run_dir, filename), dpi=300, bbox_inches='tight')
-            plt.close()
-            print(f"📊 Saved: {filename}")
+                    filename = f'windowed_confusion_matrix_{task}_{model_type.replace(" ", "_")}_k{best_k}.png'
+                    plt.savefig(os.path.join(self.run_dir, filename), dpi=300, bbox_inches='tight')
+                    plt.close()
+                    print(f"📊 Saved: {filename}")
 
         # Plot 4: Performance radar chart
         plt.figure(figsize=(8, 8))
@@ -1458,7 +1483,8 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
         # Plot 5: Window distribution by participant
         plt.figure(figsize=(12, 6))
         if self.windowed_features_df is not None:
-            participant_windows = self.windowed_features_df.groupby(['participant_id', 'task']).size().unstack(fill_value=0)
+            participant_windows = self.windowed_features_df.groupby(['participant_id', 'task']).size().unstack(
+                fill_value=0)
             participant_windows.plot(kind='bar', stacked=True, colormap='Set3')
             plt.title('Windows per Participant by Task', fontsize=14, fontweight='bold')
             plt.xlabel('Participant ID')
@@ -1466,7 +1492,8 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
             plt.legend(title='Task', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
-            plt.savefig(os.path.join(self.run_dir, 'windowed_participant_distribution.png'), dpi=300, bbox_inches='tight')
+            plt.savefig(os.path.join(self.run_dir, 'windowed_participant_distribution.png'), dpi=300,
+                        bbox_inches='tight')
             plt.close()
             print("📊 Saved: windowed_participant_distribution.png")
 
@@ -1563,6 +1590,7 @@ class WindowedMLAnalyzer(AdvancedVisualizationMixin):
 
         # Plot 9: Advanced classification plots
         self.create_advanced_classification_plots()
+
 
 def plot_top3_feature_importance(results_dict, analyser_type, run_dir):
     """
@@ -1726,6 +1754,7 @@ def plot_top3_feature_importance(results_dict, analyser_type, run_dir):
         plt.close()
         print(f" • {table_path}")
 
+
 def run_complete_ml_analysis(data_dict, use_hyperparameter_tuning=True):
     """
     Run both non-windowed and windowed ML analysis with comprehensive reporting and optional hyperparameter tuning
@@ -1782,7 +1811,8 @@ def run_complete_ml_analysis(data_dict, use_hyperparameter_tuning=True):
             row['NW_Accuracy'] = f"{nw_result['best_accuracy']:.3f}"
             row['NW_Samples'] = nw_result['n_samples']
         else:
-            row.update({'NW_Model': 'N/A', 'NW_k_features': 'N/A', 'NW_F1': 'N/A', 'NW_Accuracy': 'N/A', 'NW_Samples': 'N/A'})
+            row.update(
+                {'NW_Model': 'N/A', 'NW_k_features': 'N/A', 'NW_F1': 'N/A', 'NW_Accuracy': 'N/A', 'NW_Samples': 'N/A'})
 
         if task in windowed_results:
             w_result = windowed_results[task]
@@ -1792,7 +1822,8 @@ def run_complete_ml_analysis(data_dict, use_hyperparameter_tuning=True):
             row['W_Accuracy'] = f"{w_result['best_accuracy']:.3f}"
             row['W_Windows'] = w_result['n_windows']
         else:
-            row.update({'W_Model': 'N/A', 'W_k_features': 'N/A', 'W_F1': 'N/A', 'W_Accuracy': 'N/A', 'W_Windows': 'N/A'})
+            row.update(
+                {'W_Model': 'N/A', 'W_k_features': 'N/A', 'W_F1': 'N/A', 'W_Accuracy': 'N/A', 'W_Windows': 'N/A'})
 
         comparison_data.append(row)
 
