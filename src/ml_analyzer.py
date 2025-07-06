@@ -17,7 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score,
                              classification_report, confusion_matrix, roc_auc_score,
-                             balanced_accuracy_score, matthews_corrcoef)
+                             balanced_accuracy_score, matthews_corrcoef, roc_curve, auc, precision_recall_curve)
 from sklearn.pipeline import Pipeline
 from scipy.signal import find_peaks
 from scipy.stats import skew, kurtosis
@@ -29,7 +29,6 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Create output directory
 os.makedirs('./outputs/ml_plots', exist_ok=True)
 
 
@@ -40,45 +39,187 @@ def generate_logarithmic_k_features(total_features):
     while k < total_features:
         k_values.add(k)
         k *= 2
-    k_values.add(total_features)  # Include all features
+    k_values.add(total_features)
     return sorted(k_values)
 
 
-# Add this new function for hyperparameter tuning
 def get_model_param_grids():
-    """Define hyperparameter grids for each model"""
+    # param_grids = {
+    #     'Random Forest': {
+    #         'classifier__n_estimators': [50, 100, 200],
+    #         'classifier__max_depth': [3, 5, 10, None],
+    #         'classifier__min_samples_split': [2, 5, 10],
+    #         'classifier__min_samples_leaf': [1, 2, 4],
+    #         'classifier__bootstrap': [True, False]
+    #     },
+    #     'SVM': {
+    #         'classifier__C': [0.1, 1, 10, 100],
+    #         'classifier__gamma': ['scale', 'auto', 0.001, 0.01, 0.1, 1],
+    #         'classifier__kernel': ['rbf', 'linear', 'poly']
+    #     },
+    #     'K-NN': {
+    #         'classifier__n_neighbors': [3, 5, 7, 11, 15],
+    #         'classifier__weights': ['uniform', 'distance'],
+    #         'classifier__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
+    #         'classifier__metric': ['euclidean', 'manhattan', 'minkowski']
+    #     },
+    #     'Naive Bayes': {
+    #         'classifier__var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+    #     }
+    # }
+
     param_grids = {
         'Random Forest': {
-            'classifier__n_estimators': [50, 100, 200],
-            'classifier__max_depth': [3, 5, 10, None],
-            'classifier__min_samples_split': [2, 5, 10],
-            'classifier__min_samples_leaf': [1, 2, 4],
-            'classifier__bootstrap': [True, False]
+            'classifier__n_estimators': [50, 100],
+            # 'classifier__max_depth': [3, 5]
         },
         'SVM': {
-            'classifier__C': [0.1, 1, 10, 100],
-            'classifier__gamma': ['scale', 'auto', 0.001, 0.01, 0.1, 1],
-            'classifier__kernel': ['rbf', 'linear', 'poly']
+            # 'classifier__C': [1, 10],
+            'classifier__kernel': ['rbf', 'linear']
         },
         'K-NN': {
-            'classifier__n_neighbors': [3, 5, 7, 11, 15],
-            'classifier__weights': ['uniform', 'distance'],
-            'classifier__algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
-            'classifier__metric': ['euclidean', 'manhattan', 'minkowski']
+            'classifier__n_neighbors': [3, 5],
+            # 'classifier__weights': ['uniform', 'distance']
         },
         'Naive Bayes': {
-            'classifier__var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+            'classifier__var_smoothing': [1e-11, 1e-9, 1e-7]
         }
     }
+
     return param_grids
 
 
-class NonWindowedMLAnalyzer:
+class AdvancedVisualizationMixin:
+    def create_advanced_classification_plots(self):
+        if not hasattr(self, 'results') or not self.results:
+            print("No results to visualize. Run analysis first.")
+            return
+
+        for task, task_result in self.results.items():
+            best_model = task_result['best_model']
+            best_result = task_result['detailed_results'][best_model]
+            # Use stored predictions and probabilities if available
+            y_true = best_result.get('all_y_true', [])
+            y_pred = best_result.get('all_y_pred', [])
+            y_pred_proba = best_result.get('all_y_pred_proba', None)
+            feature_names = best_result.get('selected_features', [])
+            analyzer_type = self._get_analyzer_type()
+
+            # ROC Curve
+            if y_pred_proba is not None and len(y_true) == len(y_pred_proba) and len(y_true) > 0:
+                fpr, tpr, _ = roc_curve(y_true, y_pred_proba)
+                auc_score = auc(fpr, tpr)
+                plt.figure(figsize=(8, 6))
+                plt.plot(fpr, tpr, label=f'{best_model} (AUC = {auc_score:.3f})', linewidth=2)
+                plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
+                plt.xlabel('False Positive Rate')
+                plt.ylabel('True Positive Rate')
+                plt.title(f'ROC Curve - {task.replace("_", " ").title()}\nBest Model: {best_model}')
+                plt.legend()
+                plt.grid(True, alpha=0.3)
+                plt.tight_layout()
+                plt.savefig(f'./outputs/ml_plots/roc_curve_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png',
+                            dpi=300, bbox_inches='tight')
+                plt.close()
+                print(f"📊 Saved: roc_curve_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
+
+            # Precision-Recall Curve
+            if y_pred_proba is not None and len(y_true) == len(y_pred_proba) and len(y_true) > 0:
+                precision, recall, _ = precision_recall_curve(y_true, y_pred_proba)
+                plt.figure(figsize=(8, 6))
+                plt.plot(recall, precision, label=f'{best_model}', linewidth=2)
+                plt.xlabel('Recall')
+                plt.ylabel('Precision')
+                plt.title(f'Precision-Recall Curve - {task.replace("_", " ").title()}\nBest Model: {best_model}')
+                plt.legend()
+                plt.grid(True, alpha=0.3)
+                plt.tight_layout()
+                plt.savefig(f'./outputs/ml_plots/pr_curve_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png',
+                            dpi=300, bbox_inches='tight')
+                plt.close()
+                print(f"📊 Saved: pr_curve_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
+
+            # Classification Report Heatmap
+            if len(y_true) == len(y_pred) and len(y_true) > 0:
+                report = classification_report(y_true, y_pred, target_names=['Normal', 'Challenge'], output_dict=True,
+                                               zero_division=0)
+                df_report = pd.DataFrame(report).iloc[:-1, :-3].T
+                plt.figure(figsize=(8, 6))
+                sns.heatmap(df_report, annot=True, cmap='Blues', fmt='.3f')
+                plt.title(f'Classification Report - {task.replace("_", " ").title()}\nBest Model: {best_model}')
+                plt.tight_layout()
+                plt.savefig(
+                    f'./outputs/ml_plots/classification_report_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png',
+                    dpi=300, bbox_inches='tight')
+                plt.close()
+                print(f"📊 Saved: classification_report_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
+
+            # Prediction Probability Distribution
+            if y_pred_proba is not None and len(y_true) == len(y_pred_proba) and len(y_true) > 0:
+                plt.figure(figsize=(10, 6))
+                normal_probs = [prob for prob, true_label in zip(y_pred_proba, y_true) if true_label == 0]
+                challenge_probs = [prob for prob, true_label in zip(y_pred_proba, y_true) if true_label == 1]
+                plt.hist(normal_probs, bins=20, alpha=0.7, label='Normal (True)', color='blue')
+                plt.hist(challenge_probs, bins=20, alpha=0.7, label='Challenge (True)', color='red')
+                plt.xlabel('Predicted Probability of Challenge')
+                plt.ylabel('Frequency')
+                plt.title(
+                    f'Prediction Probability Distribution - {task.replace("_", " ").title()}\nBest Model: {best_model}')
+                plt.legend()
+                plt.grid(True, alpha=0.3)
+                plt.tight_layout()
+                plt.savefig(
+                    f'./outputs/ml_plots/prob_distribution_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png',
+                    dpi=300, bbox_inches='tight')
+                plt.close()
+                print(f"📊 Saved: prob_distribution_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
+
+            # Feature Importance (Random Forest only)
+            if best_model == 'Random Forest' and 'best_pipeline' in best_result:
+                try:
+                    rf_model = best_result['best_pipeline'].named_steps['classifier']
+                    importances = rf_model.feature_importances_
+                    indices = np.argsort(importances)[::-1]
+                    plt.figure(figsize=(10, 6))
+                    plt.bar(range(len(importances)), importances[indices])
+                    plt.title(f'Feature Importance - {task.replace("_", " ").title()}\nModel: {best_model}')
+                    plt.xlabel('Features')
+                    plt.ylabel('Importance')
+                    plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=45, ha='right')
+                    plt.tight_layout()
+                    plt.savefig(
+                        f'./outputs/ml_plots/feature_importance_{task}_{best_model.replace(" ", "_")}_{analyzer_type}.png',
+                        dpi=300, bbox_inches='tight')
+                    plt.close()
+                    print(f"📊 Saved: feature_importance_{task}_{best_model.replace(' ', '_')}_{analyzer_type}.png")
+                except Exception as e:
+                    print(f"⚠️ Could not create feature importance plot for {task} - {best_model}: {e}")
+
+    def _get_feature_columns(self):
+        raise NotImplementedError("Subclass must implement _get_feature_columns")
+
+    def _get_task_data(self, task):
+        raise NotImplementedError("Subclass must implement _get_task_data")
+
+    def _get_analyzer_type(self):
+        raise NotImplementedError("Subclass must implement _get_analyzer_type")
+
+
+class NonWindowedMLAnalyzer(AdvancedVisualizationMixin):
     def __init__(self, data_dict, use_hyperparameter_tuning=True):
         self.data_dict = data_dict
         self.features_df = None
         self.results = {}
         self.use_hyperparameter_tuning = use_hyperparameter_tuning
+
+    def _get_feature_columns(self):
+        return [col for col in self.features_df.columns if col not in ['participant_id', 'task', 'condition', 'label']]
+
+    def _get_task_data(self, task):
+        return self.features_df[self.features_df['task'] == task].copy()
+
+    def _get_analyzer_type(self):
+        return "non_windowed"
 
     def extract_features_from_entire_recording(self, df, task_type):
         """Extract features from entire recording (no windowing)"""
@@ -376,13 +517,15 @@ class NonWindowedMLAnalyzer:
                             'mean_metrics': mean_metrics,
                             'all_y_true': all_y_true,
                             'all_y_pred': all_y_pred,
+                            'all_y_pred_proba': all_y_pred_proba,
                             'confusion_matrix': confusion_matrix(all_y_true, all_y_pred),
-                            'n_samples': len(all_y_true),
+                            'n_samples': len(all_y_true) if hasattr(self, 'features_df') else len(all_y_true),
+                            'n_windows': len(all_y_true) if hasattr(self, 'windowed_features_df') else None,
                             'selected_features': selected_features,
                             'k_features': k_features,
-                            'best_pipeline': best_pipeline
+                            'best_pipeline': best_pipeline,
+                            'selector': selector,
                         }
-
                         # Track best k for each model
                         if model_name not in all_model_best_k:
                             all_model_best_k[model_name] = {
@@ -679,8 +822,11 @@ class NonWindowedMLAnalyzer:
             plt.close()
             print("📊 Saved: non_windowed_best_k_analysis.png")
 
+        # Plot 9: Advanced classification plots
+        self.create_advanced_classification_plots()
 
-class WindowedMLAnalyzer:
+
+class WindowedMLAnalyzer(AdvancedVisualizationMixin):
     def __init__(self, data_dict, use_hyperparameter_tuning=True):
         self.data_dict = data_dict
         self.windowed_features_df = None
@@ -703,6 +849,16 @@ class WindowedMLAnalyzer:
                 'sampling_rate': 60
             }
         }
+
+    def _get_feature_columns(self):
+        return [col for col in self.windowed_features_df.columns if
+                col not in ['participant_id', 'task', 'condition', 'label', 'window_id']]
+
+    def _get_task_data(self, task):
+        return self.windowed_features_df[self.windowed_features_df['task'] == task].copy()
+
+    def _get_analyzer_type(self):
+        return "windowed"
 
     def extract_windows(self, df, task_type):
         """Extract overlapping windows from continuous sensor data"""
@@ -958,7 +1114,8 @@ class WindowedMLAnalyzer:
                     'Naive Bayes': GaussianNB()
                 }
 
-                print(f"      {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
+                print(
+                    f"      {'Model':<15} {'Accuracy':<8} {'F1':<6} {'Precision':<9} {'Recall':<7} {'Specificity':<11} {'ROC-AUC':<7}")
                 print(f"      {'-' * 70}")
 
                 k_results = {}
@@ -1054,11 +1211,14 @@ class WindowedMLAnalyzer:
                             'mean_metrics': mean_metrics,
                             'all_y_true': all_y_true,
                             'all_y_pred': all_y_pred,
+                            'all_y_pred_proba': all_y_pred_proba,
                             'confusion_matrix': confusion_matrix(all_y_true, all_y_pred),
-                            'n_windows': len(all_y_true),
+                            'n_samples': len(all_y_true) if hasattr(self, 'features_df') else len(all_y_true),
+                            'n_windows': len(all_y_true) if hasattr(self, 'windowed_features_df') else None,
                             'selected_features': selected_features,
                             'k_features': k_features,
-                            'best_pipeline': best_pipeline
+                            'best_pipeline': best_pipeline,
+                            'selector': selector,
                         }
 
                         # Track best k for each model
@@ -1172,7 +1332,6 @@ class WindowedMLAnalyzer:
         if not hasattr(self, 'results') or not self.results:
             print("No results to visualize. Run analysis first.")
             return
-
         plt.style.use('default')
         sns.set_palette("husl")
 
@@ -1410,6 +1569,9 @@ class WindowedMLAnalyzer:
             plt.savefig('./outputs/ml_plots/windowed_best_k_analysis.png', dpi=300, bbox_inches='tight')
             plt.close()
             print("📊 Saved: windowed_best_k_analysis.png")
+
+        # Plot 9: Advanced classification plots
+        self.create_advanced_classification_plots()
 
 
 def plot_top3_feature_importance(results_dict, analyser_type):
