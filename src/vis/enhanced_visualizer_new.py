@@ -192,12 +192,12 @@ class EnhancedVisualizerNew:
         axes[-1].set_xlabel('Task Completion (%)', fontsize=12)
         
         # Create title with parameters
-        title_parts = ['Smoothed Participants Comparison']
-        if participant_subset:
-            title_parts.append(f'(Selected: {len(participant_subset)} participants)')
-        title_parts.append(f'- {smoothing_method.title()} Smoothing')
+        # title_parts = ['Smoothed Participants Comparison']
+        # if participant_subset:
+        #     title_parts.append(f'(Selected: {len(participant_subset)} participants)')
+        # title_parts.append(f'- {smoothing_method.title()} Smoothing')
         
-        plt.suptitle(' '.join(title_parts), fontsize=16, fontweight='bold', y=0.98)
+        # plt.suptitle(' '.join(title_parts), fontsize=16, fontweight='bold', y=0.98)
         plt.tight_layout()
         self.save_figure(fig, f'smoothed_participants_comparison_{smoothing_method}.png')
     
@@ -667,8 +667,8 @@ def create_all_new_visualizations(data, selected_participants=None):
     print("  1. Smoothed participants comparison...")
     visualizer.plot_smoothed_participants_comparison(
         data, 
-        participant_subset=selected_participants,
-        smoothing_method='savgol'
+        participant_subset=selected_participants,  # Example participants
+        smoothing_method='rolling'
     )
     
     # 2. Aggregated feature bars (only t-test features)

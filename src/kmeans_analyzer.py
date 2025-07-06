@@ -211,13 +211,13 @@ class KMeansAnalyzer:
         
         # Feature selection for better clustering
         from sklearn.feature_selection import SelectKBest, f_classif
-        if len(feature_cols) > 20:
+        if len(feature_cols) > 15:
             print(f"   Selecting top 20 features from {len(feature_cols)} available...")
             
             # Create target for feature selection (base_task)
             target = pd.Categorical(self.features_df['base_task']).codes
             
-            selector = SelectKBest(score_func=f_classif, k=20)
+            selector = SelectKBest(score_func=f_classif, k=12)
             X_selected = selector.fit_transform(X, target)
             
             selected_features = [feature_cols[i] for i in selector.get_support(indices=True)]
@@ -294,10 +294,19 @@ class KMeansAnalyzer:
             if len(feature_cols) > 15:
                 from sklearn.feature_selection import SelectKBest, f_classif
                 target = pd.Categorical(task_data['condition']).codes
-                selector = SelectKBest(score_func=f_classif, k=15)
+                selector = SelectKBest(score_func=f_classif, k=2)
                 X_task_selected = selector.fit_transform(X_task, target)
                 X_task = pd.DataFrame(X_task_selected, index=X_task.index)
-            
+
+                # Get selected feature names
+                selected_feature_indices = selector.get_support(indices=True)
+                selected_features = [feature_cols[i] for i in selected_feature_indices]
+                
+                print(f"   📊 Selected features for {base_task}:")
+                feature_scores = selector.scores_[selected_feature_indices]
+                for feat, score in zip(selected_features[:5], feature_scores[:5]):
+                    print(f"      {feat}: {score:.2f}")
+                
             # Standardize features for this task
             X_task_scaled = StandardScaler().fit_transform(X_task)
             
@@ -372,48 +381,50 @@ class KMeansAnalyzer:
         self.save_figure(fig, 'task_clustering_analysis.png')
     
     def plot_condition_clustering(self, results):
-        """Plot condition-based clustering results for each task."""
+        """Plot condition-based clustering results for each task with distinct colors."""
         n_tasks = len(results)
         if n_tasks == 0:
             return
-        
+
         fig, axes = plt.subplots(2, n_tasks, figsize=(5*n_tasks, 10))
         if n_tasks == 1:
             axes = axes.reshape(-1, 1)
-        
+
         for i, (base_task, task_results) in enumerate(results.items()):
             X_scaled = task_results['X_scaled']
             clusters = task_results['clusters']
             results_df = task_results['results_df']
-            
+
             # PCA for 2D visualization
             pca = PCA(n_components=2, random_state=42)
             X_pca = pca.fit_transform(X_scaled)
-            
-            # Plot 1: Clusters
+
+            # Plot 1: Clusters (K-means results)
             scatter1 = axes[0, i].scatter(X_pca[:, 0], X_pca[:, 1], c=clusters, 
-                                         cmap='coolwarm', alpha=0.7, s=60)
+                                        cmap='coolwarm', alpha=0.7, s=60)
             axes[0, i].set_title(f'{base_task.replace("_", " ").title()}\nK-means Clusters (k=2)', 
-                               fontsize=12, fontweight='bold')
+                            fontsize=12, fontweight='bold')
             axes[0, i].set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.1%})')
             axes[0, i].set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.1%})')
+
+            # Plot 2: True condition labels with manual color assignment
+            normal_mask = results_df['condition'] == 'normal'
+            challenge_mask = results_df['condition'] == 'challenge'
             
-            # Plot 2: True condition labels
-            condition_colors = {'normal': 0, 'challenge': 1}
-            true_colors = [condition_colors[cond] for cond in results_df['condition']]
-            scatter2 = axes[1, i].scatter(X_pca[:, 0], X_pca[:, 1], c=true_colors, 
-                                         cmap='coolwarm', alpha=0.7, s=60)
+            # Plot normal points in red and challenge points in blue
+            axes[1, i].scatter(X_pca[normal_mask, 0], X_pca[normal_mask, 1], 
+                            c='red', alpha=0.7, s=60, label='Normal', edgecolor='darkred')
+            axes[1, i].scatter(X_pca[challenge_mask, 0], X_pca[challenge_mask, 1], 
+                            c='blue', alpha=0.7, s=60, label='Challenge', edgecolor='darkblue')
+            
             axes[1, i].set_title(f'True Condition Labels', fontsize=12, fontweight='bold')
             axes[1, i].set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.1%})')
             axes[1, i].set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.1%})')
-            
+
             # Add legend for true labels (only for first plot)
             if i == 0:
-                for condition, color_idx in condition_colors.items():
-                    axes[1, i].scatter([], [], c=plt.cm.coolwarm(color_idx), 
-                                     label=condition.title(), s=60)
-                axes[1, i].legend()
-        
+                axes[1, i].legend(loc='upper right', frameon=True, fancybox=True)
+
         plt.suptitle('Condition-Based Clustering Analysis', fontsize=16, fontweight='bold')
         plt.tight_layout()
         self.save_figure(fig, 'condition_clustering_analysis.png')

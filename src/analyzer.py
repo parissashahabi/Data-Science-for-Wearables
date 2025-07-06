@@ -391,10 +391,10 @@ class MovellaAnalyzer:
         axes[0, 0].grid(True, alpha=0.3)
 
         # Add Shapiro-Wilk result
-        normality_status = "✓ Normal" if normal_p > 0.05 else "⚠ Non-normal"
-        axes[0, 0].text(0.05, 0.95, f'Shapiro-Wilk: p={normal_p:.3f}\n{normality_status}',
-                        transform=axes[0, 0].transAxes, fontsize=10, verticalalignment='top',
-                        bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+        # normality_status = "✓ Normal" if normal_p > 0.05 else "⚠ Non-normal"
+        # axes[0, 0].text(0.05, 0.95, f'Shapiro-Wilk: p={normal_p:.3f}\n{normality_status}',
+        #                 transform=axes[0, 0].transAxes, fontsize=10, verticalalignment='top',
+        #                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
 
         # ECDF - Normal Condition
         sorted_data, ecdf_values = self.calculate_ecdf(normal_measurements)
@@ -451,10 +451,10 @@ class MovellaAnalyzer:
         axes[1, 0].grid(True, alpha=0.3)
 
         # Add Shapiro-Wilk result
-        normality_status = "✓ Normal" if challenge_p > 0.05 else "⚠ Non-normal"
-        axes[1, 0].text(0.05, 0.95, f'Shapiro-Wilk: p={challenge_p:.3f}\n{normality_status}',
-                        transform=axes[1, 0].transAxes, fontsize=10, verticalalignment='top',
-                        bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.8))
+        # normality_status = "✓ Normal" if challenge_p > 0.05 else "⚠ Non-normal"
+        # axes[1, 0].text(0.05, 0.95, f'Shapiro-Wilk: p={challenge_p:.3f}\n{normality_status}',
+        #                 transform=axes[1, 0].transAxes, fontsize=10, verticalalignment='top',
+        #                 bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.8))
 
         # ECDF - Challenge Condition
         sorted_data, ecdf_values = self.calculate_ecdf(challenge_measurements)
@@ -502,8 +502,7 @@ class MovellaAnalyzer:
         axes[1, 2].grid(True, alpha=0.3)
 
         # Add overall title with task information
-        plt.suptitle(f'Normality Assessment: {measurement_info["name"]}\n' + 
-                    f'Cognitive Task: {measurement_info["cognitive_task"]}', 
+        plt.suptitle(f'Normality Assessment: {measurement_info["name"]}\n', 
                     fontsize=16, fontweight='bold', y=0.95)
 
         # Adjust layout
