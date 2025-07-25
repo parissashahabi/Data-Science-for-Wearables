@@ -25,7 +25,7 @@ class SlopeGraphVisualizer:
         # Custom color palette
         self.colors = {
             'increase': '#e74c3c',    # Red for performance decrease
-            'decrease': '#27ae60',    # Green for performance improvement  
+            'decrease': '#1C41E3',    # Blue for performance improvement
             'neutral': '#95a5a6',     # Gray for minimal change
             'line': '#34495e',        # Dark gray for lines
             'point': '#2c3e50'        # Darker for points
@@ -344,7 +344,7 @@ class SlopeGraphVisualizer:
 
         # Simple title
         ax.set_title(f'{task_name.replace("_", " ").title()} - {metric_label}',
-                     fontsize=14, fontweight='bold')
+                     fontsize=18, fontweight='bold')
 
         plt.tight_layout()
         return fig
