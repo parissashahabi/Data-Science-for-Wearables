@@ -81,7 +81,7 @@ class MovellaAnalyzer:
         # Calculate signal statistics for adaptive thresholding
         signal_std = np.std(smoothed_acceleration)
         threshold = max(0.5, signal_std * 0.8)  # Minimum threshold of 0.5 m/s²
-        min_distance_samples = int(0.75 * 100)  # 1.5 seconds at 100Hz
+        min_distance_samples = int(0.75 * 60)  # 1.5 seconds at 100Hz
 
         # Find all potential positive and negative peaks
         potential_positive_peaks, _ = find_peaks(

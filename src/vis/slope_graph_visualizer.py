@@ -56,78 +56,68 @@ class SlopeGraphVisualizer:
         return None
     
     def count_sit_to_stand_repetitions(self, df, task_type):
-        """Count sit-to-stand repetitions using the same method as analyzer.py"""
         if 'step_count' in task_type:
-            x_col = 'acceleration_m/s²_x'
-            y_col = 'acceleration_m/s²_y'
             z_col = 'acceleration_m/s²_z'
         else:
-            x_col = 'freeAcceleration_m/s²_x'
-            y_col = 'freeAcceleration_m/s²_y'
             z_col = 'freeAcceleration_m/s²_z'
 
+        # For sit-to-stand, we're primarily interested in vertical (Z-axis) acceleration
         vertical_acceleration = df[z_col].values
-        window_size = 5
+
+        # Apply smoothing to reduce noise while preserving the main movement patterns
+        window_size = 15  # Smooth over ~50ms at 100Hz sampling rate
         if len(vertical_acceleration) >= window_size:
             padded_signal = np.pad(vertical_acceleration, (window_size // 2, window_size // 2), mode='edge')
             smoothed_acceleration = np.convolve(padded_signal, np.ones(window_size) / window_size, mode='valid')
         else:
             smoothed_acceleration = vertical_acceleration
 
+        # Remove any DC offset by subtracting the mean
         smoothed_acceleration = smoothed_acceleration - np.mean(smoothed_acceleration)
+
+        # Calculate signal statistics for adaptive thresholding
         signal_std = np.std(smoothed_acceleration)
-        threshold = max(0.5, signal_std * 0.8)
-        min_distance_samples = int(0.75 * 100)
+        threshold = max(0.5, signal_std * 0.8)  # Minimum threshold of 0.5 m/s²
+        min_distance_samples = int(0.75 * 60)  # 1.5 seconds at 100Hz
 
-        potential_positive_peaks, positive_properties = find_peaks(
-            smoothed_acceleration,
-            height=threshold,
-            distance=min_distance_samples // 3,
-            prominence=threshold * 0.3
+        # Find all potential positive and negative peaks
+        potential_positive_peaks, _ = find_peaks(
+            smoothed_acceleration, height=threshold, distance=min_distance_samples // 3
+        )
+        potential_negative_peaks, _ = find_peaks(
+            -smoothed_acceleration, height=threshold, distance=min_distance_samples // 3
         )
 
-        potential_negative_peaks, negative_properties = find_peaks(
-            -smoothed_acceleration,
-            height=threshold,
-            distance=min_distance_samples // 3,
-            prominence=threshold * 0.3
-        )
-
-        all_peaks = []
-        for i, peak_pos in enumerate(potential_positive_peaks):
-            all_peaks.append({'position': peak_pos, 'type': 'positive'})
-        for i, peak_pos in enumerate(potential_negative_peaks):
-            all_peaks.append({'position': peak_pos, 'type': 'negative'})
-
+        # Combine and sort peaks by position
+        all_peaks = [{'position': pos, 'type': 'positive'} for pos in potential_positive_peaks] + \
+                    [{'position': pos, 'type': 'negative'} for pos in potential_negative_peaks]
         all_peaks.sort(key=lambda x: x['position'])
 
+        # Enforce strict alternating pattern
         valid_alternating_peaks = []
         last_accepted_type = None
-        for peak in all_peaks:
-            current_type = peak['type']
-            current_pos = peak['position']
-            if current_type != last_accepted_type:
-                if (len(valid_alternating_peaks) == 0 or
-                        (current_pos - valid_alternating_peaks[-1]['position']) >= (min_distance_samples // 4)):
-                    valid_alternating_peaks.append(peak)
-                    last_accepted_type = current_type
 
+        for peak in all_peaks:
+            if peak['type'] != last_accepted_type:
+                if not valid_alternating_peaks or \
+                        (peak['position'] - valid_alternating_peaks[-1]['position']) >= (min_distance_samples // 4):
+                    valid_alternating_peaks.append(peak)
+                    last_accepted_type = peak['type']
+
+        # Count sit-to-stand repetitions
         repetitions = 0
-        i = 0
-        while i < len(valid_alternating_peaks) - 1:
+        for i in range(len(valid_alternating_peaks) - 1):
             current_peak = valid_alternating_peaks[i]
             next_peak = valid_alternating_peaks[i + 1]
-            if (current_peak['type'] == 'negative' and next_peak['type'] == 'positive'):
+
+            if current_peak['type'] == 'negative' and next_peak['type'] == 'positive':
                 time_gap = next_peak['position'] - current_peak['position']
-                min_gap = int(0.2 * 100)
-                max_gap = int(5.0 * 100)
+                min_gap = int(0.2 * 100)  # Minimum gap of 0.2 seconds
+                max_gap = int(5.0 * 100)  # Maximum gap of 5.0 seconds
+
                 if min_gap <= time_gap <= max_gap:
                     repetitions += 1
-                    i += 2
-                else:
-                    i += 1
-            else:
-                i += 1
+
         
         return max(0, min(repetitions, 50))
 
@@ -145,9 +135,9 @@ class SlopeGraphVisualizer:
         if 'timestamp_ms' in df.columns:
             execution_time = (df['timestamp_ms'].iloc[-1] - df['timestamp_ms'].iloc[0]) / 1000.0
         else:
-            execution_time = len(df) / 100.0
+            execution_time = len(df) / 60.0
 
-        dt = 1.0 / 100.0
+        dt = 1.0 / 60.0
         jerk_x = np.gradient(df[x_col], dt)
         jerk_y = np.gradient(df[y_col], dt)
         jerk_z = np.gradient(df[z_col], dt)
@@ -157,14 +147,34 @@ class SlopeGraphVisualizer:
         return {'execution_time': execution_time, 'mean_jerk': mean_jerk}
 
     def count_steps_30_seconds(self, df, task_type):
-        """Count steps using the same method as analyzer.py"""
-        magnitude = self.calculate_magnitude(df)
-        if magnitude is None:
-            return 0
-        magnitude_filtered = magnitude - np.mean(magnitude)
-        peaks, _ = find_peaks(magnitude_filtered, height=np.std(magnitude_filtered) * 0.4, distance=15)
-        return len(peaks)
-    
+        """
+        Count steps during 30 seconds of walking and update the data dictionary.
+        """
+        df = self.calculate_magnitude(df, task_type)
+        magnitude = df['magnitude'].values
+
+        # Apply smoothing to reduce noise while preserving the main movement patterns
+        window_size = 15  # Smooth over ~50ms at 100Hz sampling rate
+        if len(magnitude) >= window_size:
+            padded_signal = np.pad(magnitude, (window_size // 2, window_size // 2), mode='edge')
+            smoothed_acceleration = np.convolve(padded_signal, np.ones(window_size) / window_size, mode='valid')
+        else:
+            smoothed_acceleration = magnitude
+
+        # Remove any DC offset by subtracting the mean
+        smoothed_acceleration = smoothed_acceleration - np.mean(smoothed_acceleration)
+
+        # Find peaks (steps)
+        peaks, _ = find_peaks(
+            smoothed_acceleration,
+            height=np.std(smoothed_acceleration) * 0.4,
+            distance=15
+        )
+
+        step_count = len(peaks)
+
+        return step_count
+
     def extract_slope_data(self, data: Dict[str, Dict[str, Any]]) -> Dict[str, pd.DataFrame]:
         """Extract data for slope graphs from all tasks."""
         slope_data = {}
