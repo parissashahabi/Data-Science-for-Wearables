@@ -53,18 +53,15 @@ class MovellaAnalyzer:
         df['magnitude'] = np.sqrt(df[x_col] ** 2 + df[y_col] ** 2 + df[z_col] ** 2)
         return df
 
-    def count_sit_to_stand_repetitions(self, df, task_type, participant_id, visualize=True):
+    def count_sit_to_stand_repetitions(self, df, task_type, participant_id=None, condition=None, visualize=True):
         """
-        Count sit-to-stand repetitions in 30 seconds and visualize the results.
+        Count sit-to-stand repetitions in 30 seconds
+        Based on Technical Report Task 1 requirements using peak detection on vertical acceleration
         """
         # Determine the correct acceleration columns based on task type
         if 'step_count' in task_type:
-            x_col = 'acceleration_m/s²_x'
-            y_col = 'acceleration_m/s²_y'
             z_col = 'acceleration_m/s²_z'
         else:
-            x_col = 'freeAcceleration_m/s²_x'
-            y_col = 'freeAcceleration_m/s²_y'
             z_col = 'freeAcceleration_m/s²_z'
 
         # For sit-to-stand, we're primarily interested in vertical (Z-axis) acceleration
@@ -86,60 +83,78 @@ class MovellaAnalyzer:
         threshold = max(0.5, signal_std * 0.8)  # Minimum threshold of 0.5 m/s²
         min_distance_samples = int(0.75 * 100)  # 1.5 seconds at 100Hz
 
-        # Find all potential positive peaks (upward acceleration during rising phase)
-        potential_positive_peaks, _ = find_peaks(smoothed_acceleration, height=threshold, distance=min_distance_samples)
+        # Find all potential positive and negative peaks
+        potential_positive_peaks, _ = find_peaks(
+            smoothed_acceleration, height=threshold, distance=min_distance_samples // 3
+        )
+        potential_negative_peaks, _ = find_peaks(
+            -smoothed_acceleration, height=threshold, distance=min_distance_samples // 3
+        )
 
-        # Find all potential negative peaks (downward acceleration during preparation phase)
-        potential_negative_peaks, _ = find_peaks(-smoothed_acceleration, height=threshold, distance=min_distance_samples)
+        # Combine and sort peaks by position
+        all_peaks = [{'position': pos, 'type': 'positive'} for pos in potential_positive_peaks] + \
+                    [{'position': pos, 'type': 'negative'} for pos in potential_negative_peaks]
+        all_peaks.sort(key=lambda x: x['position'])
 
-        # Count sit-to-stand repetitions using alternating peaks
+        # Enforce strict alternating pattern
+        valid_alternating_peaks = []
+        last_accepted_type = None
+
+        for peak in all_peaks:
+            if peak['type'] != last_accepted_type:
+                if not valid_alternating_peaks or \
+                        (peak['position'] - valid_alternating_peaks[-1]['position']) >= (min_distance_samples // 4):
+                    valid_alternating_peaks.append(peak)
+                    last_accepted_type = peak['type']
+
+        # Count sit-to-stand repetitions
         repetitions = 0
-        i, j = 0, 0
-        while i < len(potential_positive_peaks) and j < len(potential_negative_peaks):
-            if potential_positive_peaks[i] < potential_negative_peaks[j]:
-                repetitions += 1
-                i += 1
-                j += 1
-            else:
-                j += 1
+        for i in range(len(valid_alternating_peaks) - 1):
+            current_peak = valid_alternating_peaks[i]
+            next_peak = valid_alternating_peaks[i + 1]
 
-        # Final bounds check
-        repetitions = max(0, min(repetitions, 50))
+            if current_peak['type'] == 'negative' and next_peak['type'] == 'positive':
+                time_gap = next_peak['position'] - current_peak['position']
+                min_gap = int(0.2 * 100)  # Minimum gap of 0.2 seconds
+                max_gap = int(5.0 * 100)  # Maximum gap of 5.0 seconds
+
+                if min_gap <= time_gap <= max_gap:
+                    repetitions += 1
 
         # Visualization (optional)
         if visualize:
-            sampling_rate = 60
-            time_in_seconds = np.arange(len(smoothed_acceleration)) / sampling_rate
-            plt.figure(figsize=(12, 6))
+            time_in_seconds = np.arange(len(smoothed_acceleration)) / 60  # Assuming 60Hz sampling rate
+            plt.figure(figsize=(12, 8))
             plt.plot(time_in_seconds, smoothed_acceleration, label='Smoothed Acceleration', color='blue', alpha=0.7)
             plt.scatter(time_in_seconds[potential_positive_peaks], smoothed_acceleration[potential_positive_peaks],
-                        color='green', label='Positive Peaks', zorder=3)
+                        color='green', label='Not Counted Positive Peaks', zorder=3)
             plt.scatter(time_in_seconds[potential_negative_peaks], smoothed_acceleration[potential_negative_peaks],
-                        color='red', label='Negative Peaks', zorder=3)
+                        color='red', label='Not Counted Negative Peaks', zorder=3)
+            plt.scatter(
+                [time_in_seconds[peak['position']] for peak in valid_alternating_peaks],
+                [smoothed_acceleration[peak['position']] for peak in valid_alternating_peaks],
+                color='orange', label='Valid Alternating Peaks', zorder=4, s=100, edgecolors='black'
+            )
             plt.axhline(y=threshold, color='purple', linestyle='--', label=f'Positive Threshold = {threshold:.2f}')
             plt.axhline(y=-threshold, color='purple', linestyle='--', label=f'Negative Threshold = {threshold:.2f}')
-            plt.title(f'Sit-to-Stand - Detected Repetitions for Participant {participant_id}', fontsize=14, fontweight='bold')
+            plt.title(f'Sit-to-Stand - {condition.capitalize()} Condition\nParticipant {participant_id}', fontsize=16, fontweight='bold', pad=20)
             plt.xlabel('Time (s)', fontsize=12)
             plt.ylabel('Acceleration (m/s²)', fontsize=12)
             plt.grid(alpha=0.3)
-            plt.tight_layout()
-
-            # Move legend to the right
-            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
+            plt.legend(loc='upper right', fontsize=10, frameon=True, bbox_to_anchor=(1, 1.2))
+            plt.tight_layout(rect=(0, 0, 1, 0.95))
 
             # Save the plot
             output_dir = 'outputs/plots'
             os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(output_dir, f'sit_to_stand_peaks_{participant_id}.png')
+            output_path = os.path.join(output_dir, f'sit_to_stand_peaks_{participant_id}_{condition}.png')
             plt.savefig(output_path, dpi=300, bbox_inches='tight')
             print(f"💾 Plot saved to: {output_path}")
 
             # Show the plot
             plt.show()
 
-
         return repetitions
-
 
     def calculate_water_task_metrics(self, df, task_type):
         """
@@ -182,7 +197,7 @@ class MovellaAnalyzer:
             'jerk_variability': np.std(jerk_magnitude)
         }
 
-    def count_steps_30_seconds(self, df, task_type, participant_id, visualize=True):
+    def count_steps_30_seconds(self, df, task_type, participant_id, condition=None, visualize=True):
         """
         Count steps during 30 seconds of walking and update the data dictionary.
         """
@@ -220,7 +235,7 @@ class MovellaAnalyzer:
             plt.figure(figsize=(12, 6))
             plt.plot(time_in_seconds, smoothed_acceleration, label='Smoothed Acceleration', color='blue', alpha=0.7)
             plt.scatter(time_in_seconds[peaks], smoothed_acceleration[peaks], color='green', label='Detected Steps', zorder=3)
-            plt.title(f'Step Count - Detected Steps for Participant {participant_id}', fontsize=14, fontweight='bold')
+            plt.title(f'Step Count - {condition.capitalize()} Condition\nParticipant {participant_id}', fontsize=14, fontweight='bold')
             plt.xlabel('Time (s)', fontsize=12)
             plt.ylabel('Acceleration Magnitude (m/s²)', fontsize=12)
             plt.grid(alpha=0.3)
@@ -232,7 +247,7 @@ class MovellaAnalyzer:
             # Save the plot
             output_dir = 'outputs/plots'
             os.makedirs(output_dir, exist_ok=True)
-            output_path = os.path.join(output_dir, f'step_count_{participant_id}.png')
+            output_path = os.path.join(output_dir, f'step_count_{participant_id}_{condition}.png')
             plt.savefig(output_path, dpi=300, bbox_inches='tight')
             print(f"💾 Plot saved to: {output_path}")
 
@@ -257,8 +272,8 @@ class MovellaAnalyzer:
 
                 # Calculate task-specific measurements
                 if 'sit_to_stand' in task_normal:
-                    normal_measurement = self.count_sit_to_stand_repetitions(normal_data, task_normal, participant_id)
-                    challenge_measurement = self.count_sit_to_stand_repetitions(challenge_data, task_challenge, participant_id)
+                    normal_measurement = self.count_sit_to_stand_repetitions(normal_data, task_normal, participant_id, condition="normal")
+                    challenge_measurement = self.count_sit_to_stand_repetitions(challenge_data, task_challenge, participant_id, condition="challenged")
                     measurement_info = {
                         'name': 'Sit-to-Stand Repetitions (30s)',
                         'unit': 'repetitions',
@@ -290,8 +305,8 @@ class MovellaAnalyzer:
                         }
 
                 elif 'step_count' in task_normal:
-                    normal_measurement = self.count_steps_30_seconds(normal_data, task_normal, participant_id)
-                    challenge_measurement = self.count_steps_30_seconds(challenge_data, task_challenge, participant_id)
+                    normal_measurement = self.count_steps_30_seconds(normal_data, task_normal, participant_id, condition="normal")
+                    challenge_measurement = self.count_steps_30_seconds(challenge_data, task_challenge, participant_id, condition="challenged")
                     measurement_info = {
                         'name': 'Step Count (30s walking)',
                         'unit': 'steps',
