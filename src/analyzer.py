@@ -53,10 +53,9 @@ class MovellaAnalyzer:
         df['magnitude'] = np.sqrt(df[x_col] ** 2 + df[y_col] ** 2 + df[z_col] ** 2)
         return df
 
-    def count_sit_to_stand_repetitions(self, df, task_type):
+    def count_sit_to_stand_repetitions(self, df, task_type, participant_id, visualize=True):
         """
-        Count sit-to-stand repetitions in 30 seconds
-        Based on Technical Report Task 1 requirements using peak detection on vertical acceleration
+        Count sit-to-stand repetitions in 30 seconds and visualize the results.
         """
         # Determine the correct acceleration columns based on task type
         if 'step_count' in task_type:
@@ -72,7 +71,7 @@ class MovellaAnalyzer:
         vertical_acceleration = df[z_col].values
 
         # Apply smoothing to reduce noise while preserving the main movement patterns
-        window_size = 5  # Smooth over ~50ms at 100Hz sampling rate
+        window_size = 15  # Smooth over ~50ms at 100Hz sampling rate
         if len(vertical_acceleration) >= window_size:
             padded_signal = np.pad(vertical_acceleration, (window_size // 2, window_size // 2), mode='edge')
             smoothed_acceleration = np.convolve(padded_signal, np.ones(window_size) / window_size, mode='valid')
@@ -88,140 +87,59 @@ class MovellaAnalyzer:
         min_distance_samples = int(0.75 * 100)  # 1.5 seconds at 100Hz
 
         # Find all potential positive peaks (upward acceleration during rising phase)
-        potential_positive_peaks, positive_properties = find_peaks(
-            smoothed_acceleration,
-            height=threshold,
-            distance=min_distance_samples // 3,
-            prominence=threshold * 0.3
-        )
+        potential_positive_peaks, _ = find_peaks(smoothed_acceleration, height=threshold, distance=min_distance_samples)
 
         # Find all potential negative peaks (downward acceleration during preparation phase)
-        potential_negative_peaks, negative_properties = find_peaks(
-            -smoothed_acceleration,
-            height=threshold,
-            distance=min_distance_samples // 3,
-            prominence=threshold * 0.3
-        )
+        potential_negative_peaks, _ = find_peaks(-smoothed_acceleration, height=threshold, distance=min_distance_samples)
 
-        # Create structured peak data
-        all_peaks = []
-
-        for i, peak_pos in enumerate(potential_positive_peaks):
-            peak_value = smoothed_acceleration[peak_pos]
-            peak_prominence = positive_properties['prominences'][i]
-            all_peaks.append({
-                'position': peak_pos,
-                'type': 'positive',
-                'value': peak_value,
-                'prominence': peak_prominence
-            })
-
-        for i, peak_pos in enumerate(potential_negative_peaks):
-            peak_value = smoothed_acceleration[peak_pos]
-            peak_prominence = negative_properties['prominences'][i]
-            all_peaks.append({
-                'position': peak_pos,
-                'type': 'negative',
-                'value': peak_value,
-                'prominence': peak_prominence
-            })
-
-        # Sort all peaks by time
-        all_peaks.sort(key=lambda x: x['position'])
-
-        # STRICT ALTERNATING PATTERN ENFORCEMENT
-        valid_alternating_peaks = []
-        last_accepted_type = None
-
-        for peak in all_peaks:
-            current_type = peak['type']
-            current_pos = peak['position']
-
-            if current_type != last_accepted_type:
-                if (len(valid_alternating_peaks) == 0 or
-                        (current_pos - valid_alternating_peaks[-1]['position']) >= (min_distance_samples // 4)):
-                    valid_alternating_peaks.append(peak)
-                    last_accepted_type = current_type
-
-        # Count sit-to-stand repetitions using the strict alternating pattern
+        # Count sit-to-stand repetitions using alternating peaks
         repetitions = 0
-        i = 0
-
-        while i < len(valid_alternating_peaks) - 1:
-            current_peak = valid_alternating_peaks[i]
-            next_peak = valid_alternating_peaks[i + 1]
-
-            if (current_peak['type'] == 'negative' and next_peak['type'] == 'positive'):
-                time_gap = next_peak['position'] - current_peak['position']
-                min_gap = int(0.2 * 100)
-                max_gap = int(5.0 * 100)
-
-                if min_gap <= time_gap <= max_gap:
-                    repetitions += 1
-                    i += 2
-                else:
-                    i += 1
-            else:
+        i, j = 0, 0
+        while i < len(potential_positive_peaks) and j < len(potential_negative_peaks):
+            if potential_positive_peaks[i] < potential_negative_peaks[j]:
+                repetitions += 1
                 i += 1
-
-        # Alternative counting method
-        alternative_count = 0
-        expecting_type = 'negative'
-
-        for peak in valid_alternating_peaks:
-            if peak['type'] == expecting_type:
-                if expecting_type == 'positive':
-                    alternative_count += 1
-                    expecting_type = 'negative'
-                else:
-                    expecting_type = 'positive'
-
-        # Use the more conservative count
-        final_repetitions = min(repetitions, alternative_count)
-
-        # Sanity check and stricter filtering if needed
-        if final_repetitions > 30:
-            print(f"⚠️  Warning: Detected {final_repetitions} repetitions, applying stricter filtering.")
-            stricter_threshold = signal_std * 1.5
-            stricter_distance = int(1 * 100)
-
-            strict_positive_peaks, _ = find_peaks(
-                smoothed_acceleration,
-                height=stricter_threshold,
-                distance=stricter_distance,
-                prominence=stricter_threshold * 0.8
-            )
-
-            strict_negative_peaks, _ = find_peaks(
-                -smoothed_acceleration,
-                height=stricter_threshold,
-                distance=stricter_distance,
-                prominence=stricter_threshold * 0.8
-            )
-
-            strict_all_peaks = []
-            for pos in strict_positive_peaks:
-                strict_all_peaks.append({'position': pos, 'type': 'positive'})
-            for pos in strict_negative_peaks:
-                strict_all_peaks.append({'position': pos, 'type': 'negative'})
-
-            strict_all_peaks.sort(key=lambda x: x['position'])
-
-            strict_count = 0
-            expecting = 'negative'
-            for peak in strict_all_peaks:
-                if peak['type'] == expecting:
-                    if expecting == 'positive':
-                        strict_count += 1
-                        expecting = 'negative'
-                    else:
-                        expecting = 'positive'
-
-            final_repetitions = strict_count
+                j += 1
+            else:
+                j += 1
 
         # Final bounds check
-        final_repetitions = max(0, min(final_repetitions, 50))
-        return final_repetitions
+        repetitions = max(0, min(repetitions, 50))
+
+        # Visualization (optional)
+        if visualize:
+            sampling_rate = 60
+            time_in_seconds = np.arange(len(smoothed_acceleration)) / sampling_rate
+            plt.figure(figsize=(12, 6))
+            plt.plot(time_in_seconds, smoothed_acceleration, label='Smoothed Acceleration', color='blue', alpha=0.7)
+            plt.scatter(time_in_seconds[potential_positive_peaks], smoothed_acceleration[potential_positive_peaks],
+                        color='green', label='Positive Peaks', zorder=3)
+            plt.scatter(time_in_seconds[potential_negative_peaks], smoothed_acceleration[potential_negative_peaks],
+                        color='red', label='Negative Peaks', zorder=3)
+            plt.axhline(y=threshold, color='purple', linestyle='--', label=f'Positive Threshold = {threshold:.2f}')
+            plt.axhline(y=-threshold, color='purple', linestyle='--', label=f'Negative Threshold = {threshold:.2f}')
+            plt.title(f'Sit-to-Stand - Detected Repetitions for Participant {participant_id}', fontsize=14, fontweight='bold')
+            plt.xlabel('Time (s)', fontsize=12)
+            plt.ylabel('Acceleration (m/s²)', fontsize=12)
+            plt.grid(alpha=0.3)
+            plt.tight_layout()
+
+            # Move legend to the right
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
+
+            # Save the plot
+            output_dir = 'outputs/plots'
+            os.makedirs(output_dir, exist_ok=True)
+            output_path = os.path.join(output_dir, f'sit_to_stand_peaks_{participant_id}.png')
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            print(f"💾 Plot saved to: {output_path}")
+
+            # Show the plot
+            plt.show()
+
+
+        return repetitions
+
 
     def calculate_water_task_metrics(self, df, task_type):
         """
@@ -264,24 +182,63 @@ class MovellaAnalyzer:
             'jerk_variability': np.std(jerk_magnitude)
         }
 
-    def count_steps_30_seconds(self, df, task_type):
+    def count_steps_30_seconds(self, df, task_type, participant_id, visualize=True):
         """
-        Count steps during 30 seconds of walking
+        Count steps during 30 seconds of walking and update the data dictionary.
         """
         df = self.calculate_magnitude(df, task_type)
         magnitude = df['magnitude'].values
 
-        # Remove gravity component and filter noise
-        magnitude_filtered = magnitude - np.mean(magnitude)
+        # Apply smoothing to reduce noise while preserving the main movement patterns
+        window_size = 15  # Smooth over ~50ms at 100Hz sampling rate
+        if len(magnitude) >= window_size:
+            padded_signal = np.pad(magnitude, (window_size // 2, window_size // 2), mode='edge')
+            smoothed_acceleration = np.convolve(padded_signal, np.ones(window_size) / window_size, mode='valid')
+        else:
+            smoothed_acceleration = magnitude
+
+        # Remove any DC offset by subtracting the mean
+        smoothed_acceleration = smoothed_acceleration - np.mean(smoothed_acceleration)
 
         # Find peaks (steps)
         peaks, _ = find_peaks(
-            magnitude_filtered,
-            height=np.std(magnitude_filtered) * 0.4,
+            smoothed_acceleration,
+            height=np.std(smoothed_acceleration) * 0.4,
             distance=15
         )
 
         step_count = len(peaks)
+
+        # Update the data dictionary with the calculated step count
+        if participant_id in self.data_dict[task_type]:
+            self.data_dict[task_type][participant_id]['step_count'] = step_count
+
+        # Visualization (optional)
+        if visualize:
+            sampling_rate = 50
+            time_in_seconds = np.arange(len(smoothed_acceleration)) / sampling_rate
+            plt.figure(figsize=(12, 6))
+            plt.plot(time_in_seconds, smoothed_acceleration, label='Smoothed Acceleration', color='blue', alpha=0.7)
+            plt.scatter(time_in_seconds[peaks], smoothed_acceleration[peaks], color='green', label='Detected Steps', zorder=3)
+            plt.title(f'Step Count - Detected Steps for Participant {participant_id}', fontsize=14, fontweight='bold')
+            plt.xlabel('Time (s)', fontsize=12)
+            plt.ylabel('Acceleration Magnitude (m/s²)', fontsize=12)
+            plt.grid(alpha=0.3)
+            plt.tight_layout()
+
+            # Move legend to the top-right corner inside the plot
+            plt.legend(loc='upper right', fontsize=10)
+
+            # Save the plot
+            output_dir = 'outputs/plots'
+            os.makedirs(output_dir, exist_ok=True)
+            output_path = os.path.join(output_dir, f'step_count_{participant_id}.png')
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            print(f"💾 Plot saved to: {output_path}")
+
+            # Show the plot
+            plt.show()
+
         return step_count
 
     def get_task_specific_measurements(self, task_normal, task_challenge, metric_type='primary'):
@@ -300,8 +257,8 @@ class MovellaAnalyzer:
 
                 # Calculate task-specific measurements
                 if 'sit_to_stand' in task_normal:
-                    normal_measurement = self.count_sit_to_stand_repetitions(normal_data, task_normal)
-                    challenge_measurement = self.count_sit_to_stand_repetitions(challenge_data, task_challenge)
+                    normal_measurement = self.count_sit_to_stand_repetitions(normal_data, task_normal, participant_id)
+                    challenge_measurement = self.count_sit_to_stand_repetitions(challenge_data, task_challenge, participant_id)
                     measurement_info = {
                         'name': 'Sit-to-Stand Repetitions (30s)',
                         'unit': 'repetitions',
@@ -333,8 +290,8 @@ class MovellaAnalyzer:
                         }
 
                 elif 'step_count' in task_normal:
-                    normal_measurement = self.count_steps_30_seconds(normal_data, task_normal)
-                    challenge_measurement = self.count_steps_30_seconds(challenge_data, task_challenge)
+                    normal_measurement = self.count_steps_30_seconds(normal_data, task_normal, participant_id)
+                    challenge_measurement = self.count_steps_30_seconds(challenge_data, task_challenge, participant_id)
                     measurement_info = {
                         'name': 'Step Count (30s walking)',
                         'unit': 'steps',
@@ -357,20 +314,20 @@ class MovellaAnalyzer:
 
     def plot_combined_normality_for_task(self, task_normal, task_challenge, metric_type='primary', save_path=None):
         """
-        Create combined normality assessment plot for a single task (1x6 grid)
-        Includes Q-Q plots, ECDF, KDE, and histograms for normality assessment
+        Create combined normality assessment plot for a single task (2x2 grid)
+        Includes Q-Q plots and histograms with KDE for normality assessment
         """
         # Get measurements
         normal_measurements, challenge_measurements, valid_participants, measurement_info = self.get_task_specific_measurements(
             task_normal, task_challenge, metric_type)
 
-        if len(normal_measurements) == 0:
+        if len(normal_measurements) == 0 or len(challenge_measurements) == 0:
             print(f"❌ No data found for {task_normal} vs {task_challenge}")
             return None
 
         # Calculate Shapiro-Wilk tests
-        normal_stat, normal_p = shapiro(normal_measurements)
-        challenge_stat, challenge_p = shapiro(challenge_measurements)
+        normal_stat, normal_p = stats.shapiro(normal_measurements)
+        challenge_stat, challenge_p = stats.shapiro(challenge_measurements)
 
         print(f"\n📊 {measurement_info['name']} Analysis:")
         print(f"   Normal: {normal_measurements} {measurement_info['unit']}")
@@ -378,187 +335,94 @@ class MovellaAnalyzer:
         print(f"   Shapiro-Wilk Normal: W={normal_stat:.4f}, p={normal_p:.4f}")
         print(f"   Shapiro-Wilk Challenge: W={challenge_stat:.4f}, p={challenge_p:.4f}")
 
-        # Create 2x3 subplot layout (6 plots total)
-        fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+        # Create 2x2 subplot layout (4 plots total)
+        fig, axes = plt.subplots(2, 2, figsize=(12, 12))
 
-        # === Row 1: Normal Condition ===
-        
         # Q-Q Plot - Normal Condition
         stats.probplot(normal_measurements, dist="norm", plot=axes[0, 0])
-        axes[0, 0].set_title('Q-Q Plot - Normal Condition', fontsize=12, fontweight='bold', pad=15)
+        axes[0, 0].set_title('Q-Q Plot - Normal Condition', fontsize=12, fontweight='bold', pad=10)
         axes[0, 0].set_xlabel('Theoretical Quantiles')
         axes[0, 0].set_ylabel('Sample Quantiles')
         axes[0, 0].grid(True, alpha=0.3)
 
-        # Add Shapiro-Wilk result
-        # normality_status = "✓ Normal" if normal_p > 0.05 else "⚠ Non-normal"
-        # axes[0, 0].text(0.05, 0.95, f'Shapiro-Wilk: p={normal_p:.3f}\n{normality_status}',
-        #                 transform=axes[0, 0].transAxes, fontsize=10, verticalalignment='top',
-        #                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
-
-        # ECDF - Normal Condition
-        sorted_data, ecdf_values = self.calculate_ecdf(normal_measurements)
-        data_min, data_max = np.min(sorted_data), np.max(sorted_data)
-        data_range = data_max - data_min if data_max != data_min else 1
-        x_start = data_min - 0.2 * data_range
-        x_end = data_max + 0.2 * data_range
-        x_plot = np.concatenate([[x_start], sorted_data])
-        y_plot = np.concatenate([[0], ecdf_values])
-
-        axes[0, 1].step(x_plot, y_plot, where='post', linewidth=3, color='blue')
-        axes[0, 1].set_title('ECDF - Normal Condition', fontsize=12, fontweight='bold', pad=15)
-        axes[0, 1].set_xlabel(f'Data Values ({measurement_info["unit"]})')
-        axes[0, 1].set_ylabel('Cumulative Probability')
-        axes[0, 1].grid(True, alpha=0.3)
-        axes[0, 1].set_xlim(x_start, x_end)
-        axes[0, 1].set_ylim(0, 1)
-
-        # Histogram + KDE - Normal Condition
-        axes[0, 2].hist(normal_measurements, bins=min(8, len(normal_measurements)//2), 
+        # Histogram with KDE - Normal Condition
+        axes[0, 1].hist(normal_measurements, bins=min(8, len(normal_measurements)//2),
                         density=True, alpha=0.7, color='lightblue', edgecolor='black', linewidth=1)
-        
-        # Add KDE if we have enough data points
+
         if len(normal_measurements) >= 3:
             from scipy.stats import gaussian_kde
             try:
                 kde = gaussian_kde(normal_measurements)
                 x_kde = np.linspace(normal_measurements.min(), normal_measurements.max(), 100)
-                axes[0, 2].plot(x_kde, kde(x_kde), 'b-', linewidth=2, label='KDE')
-                
-                # Add normal distribution overlay for comparison
+                axes[0, 1].plot(x_kde, kde(x_kde), 'b-', linewidth=2, label='KDE')
+
                 mean_norm = np.mean(normal_measurements)
                 std_norm = np.std(normal_measurements)
                 x_normal = np.linspace(normal_measurements.min(), normal_measurements.max(), 100)
                 y_normal = stats.norm.pdf(x_normal, mean_norm, std_norm)
-                axes[0, 2].plot(x_normal, y_normal, 'r--', linewidth=2, label='Normal fit', alpha=0.8)
-                
-                axes[0, 2].legend(fontsize=9)
+                axes[0, 1].plot(x_normal, y_normal, 'r--', linewidth=2, label='Normal fit', alpha=0.8)
+
+                axes[0, 1].legend(fontsize=9)
             except:
                 pass
-        
-        axes[0, 2].set_title('Histogram + KDE - Normal Condition', fontsize=12, fontweight='bold', pad=15)
-        axes[0, 2].set_xlabel(f'Data Values ({measurement_info["unit"]})')
-        axes[0, 2].set_ylabel('Density')
-        axes[0, 2].grid(True, alpha=0.3)
 
-        # === Row 2: Challenge Condition ===
-        
-        # Q-Q Plot - Challenge Condition
+        axes[0, 1].set_title('Histogram + KDE - Normal Condition', fontsize=12, fontweight='bold', pad=10)
+        axes[0, 1].set_xlabel(f'Data Values ({measurement_info["unit"]})')
+        axes[0, 1].set_ylabel('Density')
+        axes[0, 1].grid(True, alpha=0.3)
+
+        # Q-Q Plot - Challenged Condition
         stats.probplot(challenge_measurements, dist="norm", plot=axes[1, 0])
-        axes[1, 0].set_title('Q-Q Plot - Challenge Condition', fontsize=12, fontweight='bold', pad=15)
+        axes[1, 0].set_title('Q-Q Plot - Challenged Condition', fontsize=12, fontweight='bold', pad=10)
         axes[1, 0].set_xlabel('Theoretical Quantiles')
         axes[1, 0].set_ylabel('Sample Quantiles')
         axes[1, 0].grid(True, alpha=0.3)
 
-        # Add Shapiro-Wilk result
-        # normality_status = "✓ Normal" if challenge_p > 0.05 else "⚠ Non-normal"
-        # axes[1, 0].text(0.05, 0.95, f'Shapiro-Wilk: p={challenge_p:.3f}\n{normality_status}',
-        #                 transform=axes[1, 0].transAxes, fontsize=10, verticalalignment='top',
-        #                 bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.8))
-
-        # ECDF - Challenge Condition
-        sorted_data, ecdf_values = self.calculate_ecdf(challenge_measurements)
-        data_min, data_max = np.min(sorted_data), np.max(sorted_data)
-        data_range = data_max - data_min if data_max != data_min else 1
-        x_start = data_min - 0.2 * data_range
-        x_end = data_max + 0.2 * data_range
-        x_plot = np.concatenate([[x_start], sorted_data])
-        y_plot = np.concatenate([[0], ecdf_values])
-
-        axes[1, 1].step(x_plot, y_plot, where='post', linewidth=3, color='red')
-        axes[1, 1].set_title('ECDF - Challenge Condition', fontsize=12, fontweight='bold', pad=15)
-        axes[1, 1].set_xlabel(f'Data Values ({measurement_info["unit"]})')
-        axes[1, 1].set_ylabel('Cumulative Probability')
-        axes[1, 1].grid(True, alpha=0.3)
-        axes[1, 1].set_xlim(x_start, x_end)
-        axes[1, 1].set_ylim(0, 1)
-
-        # Histogram + KDE - Challenge Condition
-        axes[1, 2].hist(challenge_measurements, bins=min(8, len(challenge_measurements)//2), 
+        # Histogram with KDE - Challenged Condition
+        axes[1, 1].hist(challenge_measurements, bins=min(8, len(challenge_measurements)//2),
                         density=True, alpha=0.7, color='lightcoral', edgecolor='black', linewidth=1)
-        
-        # Add KDE if we have enough data points
+
         if len(challenge_measurements) >= 3:
             from scipy.stats import gaussian_kde
             try:
                 kde = gaussian_kde(challenge_measurements)
                 x_kde = np.linspace(challenge_measurements.min(), challenge_measurements.max(), 100)
-                axes[1, 2].plot(x_kde, kde(x_kde), 'r-', linewidth=2, label='KDE')
-                
-                # Add normal distribution overlay for comparison
-                mean_chal = np.mean(challenge_measurements)
-                std_chal = np.std(challenge_measurements)
-                x_normal = np.linspace(challenge_measurements.min(), challenge_measurements.max(), 100)
-                y_normal = stats.norm.pdf(x_normal, mean_chal, std_chal)
-                axes[1, 2].plot(x_normal, y_normal, 'b--', linewidth=2, label='Normal fit', alpha=0.8)
-                
-                axes[1, 2].legend(fontsize=9)
+                axes[1, 1].plot(x_kde, kde(x_kde), 'b-', linewidth=2, label='KDE')
+
+                mean_challenge = np.mean(challenge_measurements)
+                std_challenge = np.std(challenge_measurements)
+                x_challenge = np.linspace(challenge_measurements.min(), challenge_measurements.max(), 100)
+                y_challenge = stats.norm.pdf(x_challenge, mean_challenge, std_challenge)
+                axes[1, 1].plot(x_challenge, y_challenge, 'r--', linewidth=2, label='Normal fit', alpha=0.8)
+
+                axes[1, 1].legend(fontsize=9)
             except:
                 pass
-        
-        axes[1, 2].set_title('Histogram + KDE - Challenge Condition', fontsize=12, fontweight='bold', pad=15)
-        axes[1, 2].set_xlabel(f'Data Values ({measurement_info["unit"]})')
-        axes[1, 2].set_ylabel('Density')
-        axes[1, 2].grid(True, alpha=0.3)
+
+        axes[1, 1].set_title('Histogram + KDE - Challenged Condition', fontsize=12, fontweight='bold', pad=10)
+        axes[1, 1].set_xlabel(f'Data Values ({measurement_info["unit"]})')
+        axes[1, 1].set_ylabel('Density')
+        axes[1, 1].grid(True, alpha=0.3)
 
         # Add overall title with task information
-        plt.suptitle(f'Normality Assessment: {measurement_info["name"]}\n', 
-                    fontsize=16, fontweight='bold', y=0.95)
+        plt.suptitle(f'Normality Assessment: {measurement_info["name"]}\n',
+                     fontsize=16, fontweight='bold', y=0.95)
 
         # Adjust layout
         plt.tight_layout()
-        plt.subplots_adjust(top=0.88, bottom=0.08, left=0.06, right=0.96, wspace=0.25, hspace=0.35)
+        plt.subplots_adjust(top=0.88, bottom=0.08, left=0.06, right=0.96, hspace=0.4, wspace=0.3)
 
-        # Save if path provided
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"💾 Enhanced normality plot saved to: {save_path}")
+        # Save if path provided, else use default filename
+        if save_path is None:
+            save_path = os.path.join("outputs", "normality_assessment.png")
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"💾 Normality plot saved to: {save_path}")
 
         plt.show()
 
-        # Print recommendation
-        print(f"\n📋 NORMALITY ASSESSMENT:")
-        print(f"   Normal condition:")
-        print(f"     • Shapiro-Wilk p-value: {normal_p:.4f}")
-        print(f"     • Sample size: {len(normal_measurements)}")
-        print(f"     • Mean ± SD: {np.mean(normal_measurements):.3f} ± {np.std(normal_measurements):.3f}")
-        
-        print(f"   Challenge condition:")
-        print(f"     • Shapiro-Wilk p-value: {challenge_p:.4f}")
-        print(f"     • Sample size: {len(challenge_measurements)}")
-        print(f"     • Mean ± SD: {np.mean(challenge_measurements):.3f} ± {np.std(challenge_measurements):.3f}")
 
-        if normal_p > 0.05 and challenge_p > 0.05:
-            recommendation = "✅ Both conditions appear normal - Proceed with paired t-test"
-            test_choice = "Parametric (paired t-test)"
-        elif normal_p > 0.01 and challenge_p > 0.01:
-            recommendation = "⚠️ Mild deviation from normality - Proceed with caution, consider non-parametric"
-            test_choice = "Parametric with caution or non-parametric"
-        else:
-            recommendation = "❌ Significant deviation from normality - Use Wilcoxon signed-rank test"
-            test_choice = "Non-parametric (Wilcoxon signed-rank)"
 
-        print(f"   📊 Statistical test recommendation: {test_choice}")
-        print(f"   💡 Interpretation: {recommendation}")
-
-        return {
-            'normal_p': normal_p,
-            'challenge_p': challenge_p,
-            'recommendation': recommendation,
-            'test_choice': test_choice,
-            'normal_data': normal_measurements,
-            'challenge_data': challenge_measurements,
-            'normal_stats': {
-                'mean': np.mean(normal_measurements),
-                'std': np.std(normal_measurements),
-                'n': len(normal_measurements)
-            },
-            'challenge_stats': {
-                'mean': np.mean(challenge_measurements),
-                'std': np.std(challenge_measurements),
-                'n': len(challenge_measurements)
-            }
-        }
 
     def paired_t_test_with_hypothesis(self, normal_data, challenge_data, task_name, participants, measurement_info):
         """
