@@ -24,44 +24,63 @@ class Visualizer:
         plt.rcParams['axes.spines.right'] = False
         plt.rcParams['figure.figsize'] = (10, 6)
         plt.rcParams['font.size'] = 11
-    
-    def plot_time_series_sample(self, task: str, task_data: Dict[str, Any], 
-                               n_participants: int = 3) -> None:
-        """Sample time series for a few participants."""
-        participants = list(task_data.keys())[:n_participants]
-        
-        fig, axes = plt.subplots(len(participants), 1, figsize=(12, 3*len(participants)))
-        if len(participants) == 1:
-            axes = [axes]
-        
-        for i, participant_id in enumerate(participants):
-            df = task_data[participant_id]['data']
-            name = task_data[participant_id]['name']
-            
+
+    def plot_time_series_sample(self, task: str, task_data: Dict[str, Any],
+                                window_size: int = 15) -> None:
+        """
+        Generate smoothed time series plots for each participant.
+        - Normalizes x-axis to start at 0 and calculates total duration dynamically.
+        - Applies rolling average for smoothing.
+        - Outputs individual graphs for each participant.
+        """
+        # Ensure the output directory exists
+        output_dir = os.path.join(config.OUTPUTS_DIR, f'{task}_time_series')
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Iterate over all participants
+        for participant_id, participant_data in task_data.items():
+            df = participant_data['data']
+            name = participant_data['name']
+
             # Get time column
             time_col = 'timestamp_ms' if 'timestamp_ms' in df.columns else df.columns[0]
-            
+
             # Get acceleration columns
             accel_cols = [col for col in df.columns if 'acceleration' in col.lower()]
-            
+
             if accel_cols and len(accel_cols) >= 3:
-                # Plot first 3 acceleration axes
+                # Normalize time to start at 0 and calculate total duration
+                time_normalized = (df[time_col] - df[time_col].min()) / 1000  # Convert ms to seconds
+
+                # Apply rolling average for smoothing
+                smoothed_data = df[accel_cols].rolling(window=window_size, center=True).mean()
+
+                # Plot smoothed time series
+                plt.figure(figsize=(10, 6))
                 for j, col in enumerate(accel_cols[:3]):
-                    axes[i].plot(df[time_col], df[col], 
-                               label=col.split('_')[-1] if '_' in col else f'Axis {j+1}',
-                               alpha=0.8, linewidth=1)
-                
-                axes[i].set_title(f'Participant {participant_id} ({name})', fontsize=12)
-                axes[i].set_ylabel('Acceleration (m/s²)', fontsize=10)
-                axes[i].legend(loc='upper right')
-                axes[i].grid(True, alpha=0.3)
-        
-        axes[-1].set_xlabel('Time (ms)', fontsize=10)
-        plt.suptitle(f'{task.replace("_", " ").title()} - Sample Time Series', 
-                    fontsize=14, y=0.98)
-        plt.tight_layout()
-        self.save_figure(fig, f'{task}_time_series_sample.png')
-    
+                    plt.plot(time_normalized, smoothed_data[col],
+                             label=col.split('_')[-1] if '_' in col else f'Axis {j+1}',
+                             alpha=0.8, linewidth=1.5)
+
+                plt.title(f'{task.replace("_", " ").title()} (Rolling Window: {window_size}) - Participant {participant_id}',
+                          fontsize=14, fontweight='bold')
+                plt.xlabel('Time (s)', fontsize=12)
+                plt.ylabel('Acceleration (m/s²)', fontsize=12)
+                plt.legend(loc='upper right')
+                plt.grid(True, alpha=0.3)
+
+                # Save the plot
+                output_path = os.path.join(output_dir, f'{task}_participant_{participant_id}.png')
+                plt.savefig(output_path, dpi=config.FIGURE_DPI, bbox_inches='tight')
+                plt.close()
+
+                print(f"💾 Saved: {output_path}")
+
+
+
+
+
+
     def plot_task_comparison(self, data: Dict[str, Dict[str, Any]], 
                            participant_id: str) -> None:
         """Compare one participant across different tasks."""
